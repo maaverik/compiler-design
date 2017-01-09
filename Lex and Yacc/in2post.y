@@ -5,6 +5,8 @@
 %}
 
 %token DIGIT NEWLINE
+%left '+' '-'
+%left '*' '/'
 
 %%
 
@@ -16,6 +18,8 @@ start : expr NEWLINE {
 
 expr:  expr '+' expr        {printf("+ ");}
 	| expr '-' expr     {printf("- ");}
+	| expr '*' expr     {printf("* ");}
+	| expr '/' expr     {printf("/ ");}
 	| '(' expr ')'
 	| DIGIT             {printf("%d ",$1);}
 	;
