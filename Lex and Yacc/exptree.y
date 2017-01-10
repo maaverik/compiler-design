@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define YYSTYPE tnode *
-#include "exprtree.h"
-#include "exprtree.c"
+#include "exptree.h"
 int yylex(void);
 %}
 %token NUM PLUS MINUS MUL DIV END
@@ -16,7 +15,7 @@ printf("Answer : %d\n",evaluate($1));
 exit(1);
 }
 ;
-expr : expr PLUS exp {$$ = makeOperatorNode('+',$1,$3);}
+expr : expr PLUS expr {$$ = makeOperatorNode('+',$1,$3);}
  | expr MINUS expr {$$ = makeOperatorNode('-',$1,$3);}
  | expr MUL expr {$$ = makeOperatorNode('*',$1,$3);}
  | expr DIV expr {$$ = makeOperatorNode('/',$1,$3);}
