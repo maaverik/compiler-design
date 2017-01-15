@@ -67,9 +67,11 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 
-	int *var[26];
+	//typedef char YYSTYPE;
+	#define YYSTYPE char
+	char *var[26];
 
-#line 73 "y.tab.c" /* yacc.c:339  */
+#line 75 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -129,12 +131,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 8 "expl.y" /* yacc.c:355  */
+#line 10 "expl.y" /* yacc.c:355  */
 
   int integer;
   char character;
 
-#line 138 "y.tab.c" /* yacc.c:355  */
+#line 140 "y.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -151,7 +153,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 155 "y.tab.c" /* yacc.c:358  */
+#line 157 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -449,8 +451,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    29,    29,    31,    32,    34,    40,    46,    50,    51,
-      52,    53,    54
+       0,    32,    32,    34,    35,    37,    43,    49,    53,    54,
+      55,    56,    57
 };
 #endif
 
@@ -1232,78 +1234,78 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 29 "expl.y" /* yacc.c:1646  */
+#line 32 "expl.y" /* yacc.c:1646  */
     {exit(1);}
-#line 1238 "y.tab.c" /* yacc.c:1646  */
+#line 1240 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 34 "expl.y" /* yacc.c:1646  */
+#line 37 "expl.y" /* yacc.c:1646  */
     {
 				     	if(var[(yyvsp[-3].character)-'a'] == NULL){
 				    		var[(yyvsp[-3].character) - 'a'] = malloc(sizeof(int));
 						}
 						*var[(yyvsp[-3].character)-'a'] = (yyvsp[-1].integer);
 					    }
-#line 1249 "y.tab.c" /* yacc.c:1646  */
+#line 1251 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 40 "expl.y" /* yacc.c:1646  */
+#line 43 "expl.y" /* yacc.c:1646  */
     {
 				     	if(var[(yyvsp[-2].character)-'a'] == NULL){
 				    		var[(yyvsp[-2].character) - 'a'] = malloc(sizeof(int));
 						}
 						scanf("%d",var[(yyvsp[-2].character)-'a']);
 					    }
-#line 1260 "y.tab.c" /* yacc.c:1646  */
+#line 1262 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 46 "expl.y" /* yacc.c:1646  */
+#line 49 "expl.y" /* yacc.c:1646  */
     {
      					printf("%d\n", (yyvsp[-2].integer));
      					}
-#line 1268 "y.tab.c" /* yacc.c:1646  */
+#line 1270 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 50 "expl.y" /* yacc.c:1646  */
+#line 53 "expl.y" /* yacc.c:1646  */
     {(yyval.integer) = (yyvsp[-2].integer) + (yyvsp[0].integer);}
-#line 1274 "y.tab.c" /* yacc.c:1646  */
+#line 1276 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 51 "expl.y" /* yacc.c:1646  */
+#line 54 "expl.y" /* yacc.c:1646  */
     {(yyval.integer) = (yyvsp[-2].integer) * (yyvsp[0].integer);}
-#line 1280 "y.tab.c" /* yacc.c:1646  */
+#line 1282 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 52 "expl.y" /* yacc.c:1646  */
+#line 55 "expl.y" /* yacc.c:1646  */
     {(yyval.integer) = (yyvsp[-1].integer);}
-#line 1286 "y.tab.c" /* yacc.c:1646  */
+#line 1288 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 53 "expl.y" /* yacc.c:1646  */
+#line 56 "expl.y" /* yacc.c:1646  */
     {(yyval.integer) = (yyvsp[0].integer);}
-#line 1292 "y.tab.c" /* yacc.c:1646  */
+#line 1294 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 54 "expl.y" /* yacc.c:1646  */
+#line 57 "expl.y" /* yacc.c:1646  */
     {
             if( var[(yyvsp[0].character) - 'a'] == NULL)
                 printf("unassigned varaiable");
             else
                 (yyval.integer) = *var[(yyvsp[0].character) - 'a'];
          }
-#line 1303 "y.tab.c" /* yacc.c:1646  */
+#line 1305 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1307 "y.tab.c" /* yacc.c:1646  */
+#line 1309 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1531,7 +1533,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 62 "expl.y" /* yacc.c:1906  */
+#line 65 "expl.y" /* yacc.c:1906  */
 
 
 int yyerror(char const *s){

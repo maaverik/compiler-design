@@ -18,5 +18,14 @@
 [")""("";"] {return *yytext;}
 [\n] 	 {return NEWLINE;}
 [ \t] {}
+"if" {return IF;}
+"then" {return THEN;}
+"while" {return WHILE;}
+"do" {return DO;}
+"endwhile" {return ENDWHILE;}
+"endif" {return ENDIF};
+"<" {return LT;}
+">" {return GT;}
+"==" {return EQ;}
 
 %%
