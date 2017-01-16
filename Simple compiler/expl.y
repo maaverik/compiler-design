@@ -1,70 +1,75 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
-	#define YYSTYPE tnode *
-	#include "expl.h"
+	#define YYSTYPE struct tnode*
 	#include "expl.c"
-	int *var[26];
+
 %}
 
-%union{
-  int integer;
-  char character;
-};
+//%union{
+//  int integer;
+//  char character;
+//};
 
-%token 	<character>ID
-%token <integer>NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL IF THEN WHILE DO ENDWHILE ENDIF THEN LT GT EQ
+%token ID
+%token NUM
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN WHILE DO ENDWHILE ENDIF LT GT EQ
 %nonassoc GT LT EQ
 %left PLUS
 %left MUL
 
-%type <integer>expr
 
 %%
 
-Program : slist NEWLINE {exit(1);}
+Program : slist NEWLINE {printf("%d\n",evaluate($1));exit(1);}
      ;
 slist : slist stmt
      | stmt
      ;
-stmt : ID ASGN expr ';' {
-				     	if(var[$1-'a'] == NULL){
-				    		var[$1 - 'a'] = malloc(sizeof(int));
-						}
-						*var[$1-'a'] = $3;
-					    }
-     | READ '(' ID ')' ';' {
-				     	if(var[$3-'a'] == NULL){
-				    		var[$3 - 'a'] = malloc(sizeof(int));
-						}
-						scanf("%d",var[$3-'a']);
-					    }
-     | WRITE '(' expr ')' ';' {
-     					printf("%d\n", $3);
-     					}
-     | IF '(' THEN slist ENDIF ';' {
+stmt: ID ASGN expr ';'	{
+			$$ = TreeCreate(-1, ASGN, -1, NULL, NULL, $1, $3, NULL);
+		}
 
-     					}
-     | WHILE '(' expr ')' DO slist ENDWHILE ';' {
+		| READ '(' ID ')' ';'	{
+			$$ = TreeCreate(-1, READ, -1, NULL, NULL, $3, NULL, NULL);
+		}
 
-     					}
+		| WRITE '(' expr ')' ';' {
+			$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $3, NULL, NULL);
+		}
 
-     ;
-expr: expr PLUS expr {$$ = $1 + $3;}
-	| expr MUL expr {$$ = $1 * $3;}
-	| '(' expr ')' {$$ = $2;}
-	| expr LT expr {$$ = $1 < $3;}
-	| expr GT expr {$$ = $1 > $3;}
-	| expr EQ expr {$$ = $1 == $3;}
-	| NUM {$$ = $1;}
-	| ID {
-            if( var[$1 - 'a'] == NULL)
-                printf("unassigned varaiable");
-            else
-                $$ = *var[$1 - 'a'];
-         }
-	;
+		| IF '(' expr ')' THEN slist ENDIF ';' {
+			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, NULL);
+		}
+
+		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
+			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
+		}
+		;
+
+expr: expr PLUS expr	{
+		$$ = makeOperatorNode(PLUS, $1, $3);
+	}
+	 | expr MUL expr	{$$ = makeOperatorNode(MUL, $1, $3);}
+
+	 | '(' expr ')'		{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
+
+	 | NUM			{$$ = $1;}
+
+	 | ID {$$ = $1;}
+
+	 | expr LT expr {
+		 $$ = makeOperatorNode(LT, $1, $3);
+	 }
+
+	 | expr GT expr {
+		 $$ = makeOperatorNode(GT, $1, $3);
+	 }
+
+	 | expr EQ expr {
+		 $$ = makeOperatorNode(EQ, $1, $3);
+	 }
+	 ;
 
 %%
 

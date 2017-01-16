@@ -46,39 +46,48 @@ extern int yydebug;
   enum yytokentype
   {
     ID = 258,
-    READ = 259,
-    NUM = 260,
+    NUM = 259,
+    READ = 260,
     ASGN = 261,
     NEWLINE = 262,
     WRITE = 263,
     PLUS = 264,
-    MUL = 265
+    MUL = 265,
+    EVAL = 266,
+    IF = 267,
+    THEN = 268,
+    WHILE = 269,
+    DO = 270,
+    ENDWHILE = 271,
+    ENDIF = 272,
+    LT = 273,
+    GT = 274,
+    EQ = 275
   };
 #endif
 /* Tokens.  */
 #define ID 258
-#define READ 259
-#define NUM 260
+#define NUM 259
+#define READ 260
 #define ASGN 261
 #define NEWLINE 262
 #define WRITE 263
 #define PLUS 264
 #define MUL 265
+#define EVAL 266
+#define IF 267
+#define THEN 268
+#define WHILE 269
+#define DO 270
+#define ENDWHILE 271
+#define ENDIF 272
+#define LT 273
+#define GT 274
+#define EQ 275
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
-union YYSTYPE
-{
-#line 10 "expl.y" /* yacc.c:1909  */
-
-  int integer;
-  char character;
-
-#line 79 "y.tab.h" /* yacc.c:1909  */
-};
-
-typedef union YYSTYPE YYSTYPE;
+typedef int YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
