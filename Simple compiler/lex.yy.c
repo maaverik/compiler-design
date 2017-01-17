@@ -389,11 +389,11 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[49] =
     {   0,
-        0,    0,   21,   20,   10,    9,    8,    6,    5,    2,
-       17,    4,   18,    1,    1,    1,    1,    1,    1,    1,
-        2,   19,   14,    0,   11,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    3,   12,    0,    0,
-       16,    0,   13,    7,    0,    0,   15,    0
+        0,    0,   21,   20,   14,   13,   12,   11,   10,   19,
+       15,    9,   16,   18,   18,   18,   18,   18,   18,   18,
+       19,   17,    6,    0,    3,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    1,    4,    0,    0,
+        8,    0,    5,    2,    0,    0,    7,    0
     } ;
 
 static yyconst YY_CHAR yy_ec[256] =
@@ -777,102 +777,102 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 11 "expl.l"
-{ char *temp; temp=(char *)malloc(2*sizeof(char)); temp[0]=*yytext; temp[1]='\0'; yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL); return ID;}
+{ return READ;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 12 "expl.l"
-{ yylval = TreeCreate(-1, NUM, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return NUM;}
+{return WRITE;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 13 "expl.l"
-{ return READ;}
+{return IF;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 14 "expl.l"
-{ return ASGN;}
+{return THEN;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 15 "expl.l"
-{return PLUS;}
+{return WHILE;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 16 "expl.l"
-{return MUL;}
+{return DO;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 17 "expl.l"
-{return WRITE;}
+{return ENDWHILE;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 18 "expl.l"
-{return *yytext;}
+{return ENDIF;}
 	YY_BREAK
 case 9:
-/* rule 9 can match eol */
 YY_RULE_SETUP
-#line 19 "expl.l"
-{return NEWLINE;}
+#line 20 "expl.l"
+{ return ASGN;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 20 "expl.l"
-{}
+#line 21 "expl.l"
+{return PLUS;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 21 "expl.l"
-{return IF;}
+#line 22 "expl.l"
+{return MUL;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 22 "expl.l"
-{return THEN;}
+#line 23 "expl.l"
+{return *yytext;}
 	YY_BREAK
 case 13:
+/* rule 13 can match eol */
 YY_RULE_SETUP
-#line 23 "expl.l"
-{return WHILE;}
+#line 24 "expl.l"
+{return NEWLINE;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 24 "expl.l"
-{return DO;}
+#line 25 "expl.l"
+{}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 25 "expl.l"
-{return ENDWHILE;}
+#line 26 "expl.l"
+{return LT;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 26 "expl.l"
-{return ENDIF;}
+#line 27 "expl.l"
+{return GT;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 27 "expl.l"
-{return LT;}
+#line 28 "expl.l"
+{return EQ;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 28 "expl.l"
-{return GT;}
+#line 29 "expl.l"
+{ char *temp; temp=(char *)malloc(2*sizeof(char)); temp[0]=*yytext; temp[1]='\0'; yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL); return ID;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 29 "expl.l"
-{return EQ;}
+#line 30 "expl.l"
+{ yylval = TreeCreate(-1, NUM, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return NUM;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 31 "expl.l"
+#line 32 "expl.l"
 ECHO;
 	YY_BREAK
 #line 879 "lex.yy.c"
@@ -1876,7 +1876,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 31 "expl.l"
+#line 32 "expl.l"
 
 
 

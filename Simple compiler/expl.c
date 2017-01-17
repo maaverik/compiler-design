@@ -38,11 +38,11 @@ int evaluate(struct tnode *t){
 		case GT : return evaluate(t->Ptr1) > evaluate(t->Ptr2);
 			break;
 		case IF:
-			  	value  = evaluate(t->Ptr1); // 0 or 1
+			value  = evaluate(t->Ptr1); // 0 or 1
 			if (value) {
 				evaluate(t->Ptr2);
 			}
-			return 1;
+			return 0;
 			break;
 		case WHILE :
 			value  = evaluate(t->Ptr1);
@@ -50,7 +50,7 @@ int evaluate(struct tnode *t){
 				evaluate(t->Ptr2);
 				value = evaluate(t->Ptr1);
 			}
-			return 1;
+			return 0;
 			break;
 		// case EVAL :
 	 //    	return evaluate(t->Ptr1);
