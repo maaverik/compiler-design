@@ -8,7 +8,7 @@
 
 %%
 
-[a-z]   { char temp = yytext[0]; yylval = TreeCreate(-1, ID, -1, &temp, NULL, NULL, NULL, NULL); return ID;}
+[a-z]   { char *temp; temp=(char *)malloc(2*sizeof(char)); temp[0]=*yytext; temp[1]='\0'; yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL); return ID;}
 [0-9]+  { yylval = TreeCreate(-1, NUM, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return NUM;}
 "read"  { return READ;}
 [=]     { return ASGN;}

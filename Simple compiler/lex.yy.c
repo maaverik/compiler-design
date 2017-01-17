@@ -777,7 +777,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 11 "expl.l"
-{ char temp = yytext[0]; yylval = TreeCreate(-1, ID, -1, &temp, NULL, NULL, NULL, NULL); return ID;}
+{ char *temp; temp=(char *)malloc(2*sizeof(char)); temp[0]=*yytext; temp[1]='\0'; yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL); return ID;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP

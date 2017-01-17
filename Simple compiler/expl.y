@@ -13,7 +13,7 @@
 
 %token ID
 %token NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN WHILE DO ENDWHILE ENDIF LT GT EQ
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN WHILE DO ENDWHILE ENDIF LT GT EQ SLIST
 %nonassoc GT LT EQ
 %left PLUS
 %left MUL
@@ -21,10 +21,10 @@
 
 %%
 
-Program : slist NEWLINE {printf("%d\n",evaluate($1));exit(1);}
+Program : slist NEWLINE {evaluate($1);exit(1);}
      ;
-slist : slist stmt
-     | stmt
+slist : slist stmt {$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);}
+     | stmt {$$ = $1;}
      ;
 stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, ASGN, -1, NULL, NULL, $1, $3, NULL);
@@ -35,7 +35,7 @@ stmt: ID ASGN expr ';'	{
 		}
 
 		| WRITE '(' expr ')' ';' {
-			$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $3, NULL, NULL);
+			$$ = TreeCreate(-1, WRITE, -1, NULL, NULL, $3, NULL, NULL);
 		}
 
 		| IF '(' expr ')' THEN slist ENDIF ';' {
@@ -47,14 +47,14 @@ stmt: ID ASGN expr ';'	{
 		}
 		;
 
-expr: expr PLUS expr	{
+expr: expr PLUS expr {
 		$$ = makeOperatorNode(PLUS, $1, $3);
 	}
-	 | expr MUL expr	{$$ = makeOperatorNode(MUL, $1, $3);}
+	 | expr MUL expr {$$ = makeOperatorNode(MUL, $1, $3);}
 
-	 | '(' expr ')'		{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
+	 | '(' expr ')'	{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
 
-	 | NUM			{$$ = $1;}
+	 | NUM {$$ = $1;}
 
 	 | ID {$$ = $1;}
 

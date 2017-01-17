@@ -52,41 +52,48 @@ int evaluate(struct tnode *t){
 			}
 			return 1;
 			break;
-		case EVAL :
-	    	return evaluate(t->Ptr1);
-	    	break;
+		// case EVAL :
+	 //    	return evaluate(t->Ptr1);
+	 //    	break;
 		case ASGN :
 			temp = t->Ptr1;
 			name = (temp->NAME)[0];
 			if (var[name - 'a'] == NULL) {
-	        	var[name - 'a'] == (int *) malloc (sizeof(int));
+	        	var[name - 'a'] = (int *) malloc (sizeof(int));
 	    	}
-	    	*var[name - 'a'] = evaluate(t -> Ptr2);
+	    	value = evaluate(t -> Ptr2);
+	    	*var[name - 'a'] = value;
 	    	return 0;
 	    	break;
 	    case ID :
-	    	temp = t->Ptr1;
-			name = (temp->NAME)[0];
-			if (var[name - 'a'] == NULL) {
-	        	var[name - 'a'] == (int *) malloc (sizeof(int));
-	    	}
+	    	name = (t -> NAME)[0];
+	    	 if (var[name - 'a'] == NULL) {
+	          exit(-1);
+	        }
+	        else {
+	          return *var[name - 'a'];
+	        }
 	    	return 0;
 	    	break;
 	    case READ :
 	    	temp = t->Ptr1;
 			name = (temp->NAME)[0];
 			if (var[name - 'a'] == NULL) {
-	        	var[name - 'a'] == (int *) malloc (sizeof(int));
+	        	var[name - 'a'] = (int *) malloc (sizeof(int));
 	    	}
+	    	printf("Enter a value\n");
 	    	scanf("%d", var[name - 'a']);
 	    	return 0;
 	    	break;
 	    case WRITE :
 	    	temp = t->Ptr1;
-	    	name = (temp->NAME)[0];
-	    	printf("%d", *var[name-'a']);
+	    	printf("%d\n",evaluate(temp));
 	    	return 0;
 	    	break;
+	    case SLIST:
+	        evaluate(t->Ptr1);
+	        evaluate(t->Ptr2);
+	        return 0;
 	}
 	return -1;
 }

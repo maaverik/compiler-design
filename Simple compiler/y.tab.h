@@ -62,7 +62,8 @@ extern int yydebug;
     ENDIF = 272,
     LT = 273,
     GT = 274,
-    EQ = 275
+    EQ = 275,
+    SLIST = 276
   };
 #endif
 /* Tokens.  */
@@ -84,6 +85,7 @@ extern int yydebug;
 #define LT 273
 #define GT 274
 #define EQ 275
+#define SLIST 276
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
