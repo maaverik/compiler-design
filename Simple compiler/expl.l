@@ -3,6 +3,7 @@
 %{
 	#include <stdlib.h>
 	#include <stdio.h>
+	#include "expl.h"
 	#include "y.tab.h"
 %}
 
@@ -12,10 +13,13 @@
 "write"	{return WRITE;}
 "if" 	{return IF;}
 "then" 	{return THEN;}
+"else"  {return ELSE;}
 "while" {return WHILE;}
 "do" 	{return DO;}
 "endwhile" {return ENDWHILE;}
 "endif" {return ENDIF;}
+"break" {return BREAK;}
+"continue" {return CONTINUE;}
 
 [=]     { return ASGN;}
 [+]		{return PLUS;}

@@ -1,5 +1,15 @@
 /** Sample Expression Tree Node Structure **/
 
+struct Gsymbol{
+  char *name;               //name of the variable or function
+  struct Typetable *type;   //pointer to the Typetable entry of variable type/return type of the function
+  int size;                 //size of an array or a user defined type. (The default types have size 1)
+  int binding;              //stores the static memory address allocated to the variable
+  struct Paramstruct *paramlist;//pointer to the head of the formal parameter list in the case of functions
+  int flabel;               //a label for identifying the starting address of the function's code in the memory✛
+  struct Gsymbol *next;     //points to the next Global Symbol Table entry
+};
+
 struct tnode {
 
 	int TYPE; // Integer, Boolean or Void (for statements)
@@ -21,11 +31,12 @@ struct tnode {
 
 	/* Maximum of three subtrees (3 required for IF THEN ELSE */
 
-	//Gsymbol *Gentry; // For global identifiers/functions
+	struct Gsymbol *Gentry; // For global identifiers/functions
 
 	//Lsymbol *Lentry; // For Local variables
 
 };
+
 
 struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3);
 

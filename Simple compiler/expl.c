@@ -21,7 +21,7 @@ struct tnode* makeOperatorNode(int c,struct tnode *l,struct tnode *r){
 	return temp;
 }
 int evaluate(struct tnode *t){
-	int value;
+	int value, tmp;
 	char name;
 	struct tnode *temp;
 	switch(t->NODETYPE){
@@ -37,24 +37,35 @@ int evaluate(struct tnode *t){
 			break;
 		case GT : return evaluate(t->Ptr1) > evaluate(t->Ptr2);
 			break;
+		case BREAK : return 2;
+			break;
+		case CONTINUE : return 3;
+			break;
 		case IF:
 			value  = evaluate(t->Ptr1); // 0 or 1
 			if (value) {
-				evaluate(t->Ptr2);
+				return evaluate(t->Ptr2);
+			}
+			else if (t->Ptr3 != NULL){
+				return evaluate(t->Ptr3);
 			}
 			return 0;
 			break;
 		case WHILE :
 			value  = evaluate(t->Ptr1);
 			while (value) {
-				evaluate(t->Ptr2);
+				tmp = evaluate(t->Ptr2);
+				if (tmp == 2)
+					break;
+				else if (tmp == 3)
+					continue;
 				value = evaluate(t->Ptr1);
 			}
 			return 0;
 			break;
-		// case EVAL :
-	 //    	return evaluate(t->Ptr1);
-	 //    	break;
+		case EVAL :
+	    	return evaluate(t->Ptr1);
+	    	break;
 		case ASGN :
 			temp = t->Ptr1;
 			name = (temp->NAME)[0];

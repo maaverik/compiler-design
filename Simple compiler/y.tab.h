@@ -56,14 +56,17 @@ extern int yydebug;
     EVAL = 266,
     IF = 267,
     THEN = 268,
-    WHILE = 269,
-    DO = 270,
-    ENDWHILE = 271,
-    ENDIF = 272,
-    LT = 273,
-    GT = 274,
-    EQ = 275,
-    SLIST = 276
+    ELSE = 269,
+    WHILE = 270,
+    DO = 271,
+    ENDWHILE = 272,
+    ENDIF = 273,
+    LT = 274,
+    GT = 275,
+    EQ = 276,
+    SLIST = 277,
+    BREAK = 278,
+    CONTINUE = 279
   };
 #endif
 /* Tokens.  */
@@ -78,14 +81,17 @@ extern int yydebug;
 #define EVAL 266
 #define IF 267
 #define THEN 268
-#define WHILE 269
-#define DO 270
-#define ENDWHILE 271
-#define ENDIF 272
-#define LT 273
-#define GT 274
-#define EQ 275
-#define SLIST 276
+#define ELSE 269
+#define WHILE 270
+#define DO 271
+#define ENDWHILE 272
+#define ENDIF 273
+#define LT 274
+#define GT 275
+#define EQ 276
+#define SLIST 277
+#define BREAK 278
+#define CONTINUE 279
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

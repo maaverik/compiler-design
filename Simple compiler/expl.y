@@ -2,6 +2,7 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#define YYSTYPE struct tnode*
+	extern FILE *yyin;
 	#include "expl.c"
 
 %}
@@ -13,7 +14,7 @@
 
 %token ID
 %token NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN WHILE DO ENDWHILE ENDIF LT GT EQ SLIST
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE
 %nonassoc GT LT EQ
 %left PLUS
 %left MUL
@@ -38,13 +39,20 @@ stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, WRITE, -1, NULL, NULL, $3, NULL, NULL);
 		}
 
-		| IF '(' expr ')' THEN slist ENDIF ';' {
-			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, NULL);
+		| IF '(' expr ')' THEN slist ELSE slist ENDIF ';' {
+			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, $8);
 		}
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
 			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
 		}
+		| BREAK ';' {
+			$$ = TreeCreate(-1, BREAK, -1, NULL, NULL, NULL, NULL, NULL);
+		}
+		| CONTINUE ';' {
+			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
+		}
+
 		;
 
 expr: expr PLUS expr {
@@ -77,7 +85,10 @@ int yyerror(char const *s){
 	printf("Error");
 }
 
-int main(){
+int main(int argc, char **argv){
+	FILE *fp;
+	fp = fopen(argv[1],"r");
+	yyin = fp;
 	yyparse();
 	return 1;
 }
