@@ -16,16 +16,16 @@
 
 %token ID
 %token NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE BEG END INT DECL ENDDECL
-%nonassoc GT LT EQ
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END INT DECL ENDDECL
+%nonassoc GT LT EQ NEQ
 %left PLUS
 %left MUL
 
 
 %%
 
-Program : decls main {exit(1);}
-		| main {exit(1);}
+Program : decls main {}
+		| main {}
      ;
 
 decls : DECL decllist ENDDECL {}
@@ -37,7 +37,7 @@ decl : INT ID ';' {
 			Ginstall($2->NAME, NUM, sizeof(int));
 		}
 	;
-main : BEG slist END {evaluate($2);}
+main : BEG slist END {evaluate($2); exit(1);}
 	;
 
 slist : slist stmt {$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);}
@@ -57,6 +57,10 @@ stmt: ID ASGN expr ';'	{
 
 		| IF '(' expr ')' THEN slist ELSE slist ENDIF ';' {
 			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, $8);
+		}
+
+		| IF '(' expr ')' THEN slist ENDIF ';' {
+			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, NULL);
 		}
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
@@ -92,6 +96,11 @@ expr: expr PLUS expr {
 
 	 | expr EQ expr {
 		 $$ = makeOperatorNode(EQ, $1, $3);
+	 }
+	 ;
+
+	 | expr NEQ expr {
+		 $$ = makeOperatorNode(NEQ, $1, $3);
 	 }
 	 ;
 

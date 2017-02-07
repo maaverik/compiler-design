@@ -64,14 +64,15 @@ extern int yydebug;
     LT = 274,
     GT = 275,
     EQ = 276,
-    SLIST = 277,
-    BREAK = 278,
-    CONTINUE = 279,
-    BEG = 280,
-    END = 281,
-    INT = 282,
-    DECL = 283,
-    ENDDECL = 284
+    NEQ = 277,
+    SLIST = 278,
+    BREAK = 279,
+    CONTINUE = 280,
+    BEG = 281,
+    END = 282,
+    INT = 283,
+    DECL = 284,
+    ENDDECL = 285
   };
 #endif
 /* Tokens.  */
@@ -94,14 +95,15 @@ extern int yydebug;
 #define LT 274
 #define GT 275
 #define EQ 276
-#define SLIST 277
-#define BREAK 278
-#define CONTINUE 279
-#define BEG 280
-#define END 281
-#define INT 282
-#define DECL 283
-#define ENDDECL 284
+#define NEQ 277
+#define SLIST 278
+#define BREAK 279
+#define CONTINUE 280
+#define BEG 281
+#define END 282
+#define INT 283
+#define DECL 284
+#define ENDDECL 285
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

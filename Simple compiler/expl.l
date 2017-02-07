@@ -38,6 +38,7 @@
 "<" 	{return LT;}
 ">" 	{return GT;}
 "==" 	{return EQ;}
+"!=" 	{return NEQ;}
 [a-zA-Z_][a-zA-Z_0-9]*   { char *temp=malloc(sizeof(char)*(strlen(yytext)+1));
 	strcpy(temp, yytext);
 	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);

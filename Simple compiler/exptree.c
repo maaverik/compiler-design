@@ -1,8 +1,6 @@
 #include "y.tab.h"
 #include "exptree.h"
 #include "sym_table.c"
-#define BREAK_SIG 2
-#define CONT_SIG 3
 
 //int *var[26];
 
@@ -37,13 +35,15 @@ int evaluate(struct tnode *t){
 			break;
 		case EQ : return evaluate(t->Ptr1) == evaluate(t->Ptr2);
 			break;
+		case NEQ : return evaluate(t->Ptr1) != evaluate(t->Ptr2);
+			break;
 		case LT : return evaluate(t->Ptr1) < evaluate(t->Ptr2);
 			break;
 		case GT : return evaluate(t->Ptr1) > evaluate(t->Ptr2);
 			break;
-		case BREAK : return BREAK_SIG;
+		case BREAK : return BREAK;
 			break;
-		case CONTINUE : return CONT_SIG;
+		case CONTINUE : return CONTINUE;
 			break;
 		case IF:
 			value  = evaluate(t->Ptr1); // 0 or 1
@@ -56,14 +56,16 @@ int evaluate(struct tnode *t){
 			return 0;
 			break;
 		case WHILE :
-			value  = evaluate(t->Ptr1);
-			while (value) {
+			while (evaluate(t->Ptr1)) {
 				tmp = evaluate(t->Ptr2);
-				if (tmp == BREAK_SIG)
+				if (tmp == BREAK){
+					printf("broken\n");
 					break;
-				else if (tmp == CONT_SIG)
+				}
+				else if (tmp == CONTINUE){
+					printf("cont\n");
 					continue;
-				value = evaluate(t->Ptr1);
+				}
 			}
 			return 0;
 			break;
@@ -72,10 +74,7 @@ int evaluate(struct tnode *t){
 	    	break;
 		case ASGN :
 			temp = t->Ptr1;
-			// if (Glookup(name) == NULL) {
-	  		//Glookup(name) = (int *) malloc (sizeof(int));
 
-	  		//	}
 	    	value = evaluate(t -> Ptr2);
 	    	*(Glookup(temp->NAME)->binding) = value;
 	    	return 0;
@@ -106,9 +105,9 @@ int evaluate(struct tnode *t){
 	    	break;
 	    case SLIST:
 	        tmp = evaluate(t->Ptr1);
-	        if (tmp == BREAK_SIG)
+	        if (tmp == BREAK)
 	        	return BREAK;
-	        else if (tmp == CONT_SIG)
+	        else if (tmp == CONTINUE)
 	        	return CONTINUE;
 	        return evaluate(t->Ptr2);
 	}
