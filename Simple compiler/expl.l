@@ -3,14 +3,20 @@
 %{
 	#include <stdlib.h>
 	#include <stdio.h>
-	#include "expl.h"
+	#define YYSTYPE struct tnode*
 	#include "y.tab.h"
+	#include "exptree.h"
+	#include "sym_table.h"
+
+	struct Gsymbol *GST = NULL;
 %}
 
 %%
 
 "read"  { return READ;}
 "write"	{return WRITE;}
+"begin" {return BEG;}
+"end"   {return END;}
 "if" 	{return IF;}
 "then" 	{return THEN;}
 "else"  {return ELSE;}
@@ -25,12 +31,15 @@
 [+]		{return PLUS;}
 [*] 	{return MUL;}
 [);(] 	{return *yytext;}
-[\n] 	{return NEWLINE;}
-[ \t] 	{}
+[ \t\n] 	{}
 "<" 	{return LT;}
 ">" 	{return GT;}
 "==" 	{return EQ;}
-[a-z]   { char *temp; temp=(char *)malloc(2*sizeof(char)); temp[0]=*yytext; temp[1]='\0'; yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL); return ID;}
+[a-zA-Z_][a-zA-Z_0-9]*   { char *temp=malloc(sizeof(char)*(strlen(yytext)+1));
+	strcpy(temp, yytext);
+	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);
+	Ginstall(temp, NUM, sizeof(int));
+	return ID;}
 [0-9]+  { yylval = TreeCreate(-1, NUM, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return NUM;}
 
 %%

@@ -1,7 +1,10 @@
 #include "y.tab.h"
-#include "expl.h"
+#include "exptree.h"
+#include "sym_table.c"
+#define BREAK_SIG 2
+#define CONT_SIG 3
 
-int *var[26];
+//int *var[26];
 
 struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
 	struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
@@ -20,9 +23,10 @@ struct tnode* makeOperatorNode(int c,struct tnode *l,struct tnode *r){
 	struct tnode *temp = TreeCreate(-1, c, -1, NULL, NULL, l, r, NULL);
 	return temp;
 }
+
+
 int evaluate(struct tnode *t){
 	int value, tmp;
-	char name;
 	struct tnode *temp;
 	switch(t->NODETYPE){
 		case NUM : return t->VALUE;
@@ -37,9 +41,9 @@ int evaluate(struct tnode *t){
 			break;
 		case GT : return evaluate(t->Ptr1) > evaluate(t->Ptr2);
 			break;
-		case BREAK : return 2;
+		case BREAK : return BREAK_SIG;
 			break;
-		case CONTINUE : return 3;
+		case CONTINUE : return CONT_SIG;
 			break;
 		case IF:
 			value  = evaluate(t->Ptr1); // 0 or 1
@@ -55,9 +59,9 @@ int evaluate(struct tnode *t){
 			value  = evaluate(t->Ptr1);
 			while (value) {
 				tmp = evaluate(t->Ptr2);
-				if (tmp == 2)
+				if (tmp == BREAK_SIG)
 					break;
-				else if (tmp == 3)
+				else if (tmp == CONT_SIG)
 					continue;
 				value = evaluate(t->Ptr1);
 			}
@@ -68,32 +72,30 @@ int evaluate(struct tnode *t){
 	    	break;
 		case ASGN :
 			temp = t->Ptr1;
-			name = (temp->NAME)[0];
-			if (var[name - 'a'] == NULL) {
-	        	var[name - 'a'] = (int *) malloc (sizeof(int));
-	    	}
+			// if (Glookup(name) == NULL) {
+	  		//Glookup(name) = (int *) malloc (sizeof(int));
+
+	  		//	}
 	    	value = evaluate(t -> Ptr2);
-	    	*var[name - 'a'] = value;
+	    	*(Glookup(temp->NAME)->binding) = value;
 	    	return 0;
 	    	break;
 	    case ID :
-	    	name = (t -> NAME)[0];
-	    	 if (var[name - 'a'] == NULL) {
+	    	 if (Glookup((t -> NAME)) == NULL) {
 	          exit(-1);
 	        }
 	        else {
-	          return *var[name - 'a'];
+	          return *(Glookup((t -> NAME))->binding);
 	        }
 	    	return 0;
 	    	break;
 	    case READ :
 	    	temp = t->Ptr1;
-			name = (temp->NAME)[0];
-			if (var[name - 'a'] == NULL) {
-	        	var[name - 'a'] = (int *) malloc (sizeof(int));
-	    	}
+			// if (var[name - 'a'] == NULL) {
+	  //       	var[name - 'a'] = (int *) malloc (sizeof(int));
+	  //   	}
 	    	printf("Enter a value\n");
-	    	scanf("%d", var[name - 'a']);
+	    	scanf("%d", Glookup((temp->NAME))->binding);
 	    	return 0;
 	    	break;
 	    case WRITE :
@@ -102,9 +104,12 @@ int evaluate(struct tnode *t){
 	    	return 0;
 	    	break;
 	    case SLIST:
-	        evaluate(t->Ptr1);
-	        evaluate(t->Ptr2);
-	        return 0;
+	        tmp = evaluate(t->Ptr1);
+	        if (tmp == BREAK_SIG)
+	        	return BREAK;
+	        else if (tmp == CONT_SIG)
+	        	return CONTINUE;
+	        return evaluate(t->Ptr2);
 	}
 	return -1;
 }

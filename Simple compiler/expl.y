@@ -3,8 +3,10 @@
 	#include <stdlib.h>
 	#define YYSTYPE struct tnode*
 	extern FILE *yyin;
-	#include "expl.c"
+	#include "exptree.c"
 
+	int yylex();
+	int yyerror(char *);
 %}
 
 //%union{
@@ -14,7 +16,7 @@
 
 %token ID
 %token NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE BEG END
 %nonassoc GT LT EQ
 %left PLUS
 %left MUL
@@ -22,7 +24,7 @@
 
 %%
 
-Program : slist NEWLINE {evaluate($1);exit(1);}
+Program : BEG slist END {evaluate($2);exit(1);}
      ;
 slist : slist stmt {$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);}
      | stmt {$$ = $1;}
@@ -81,8 +83,9 @@ expr: expr PLUS expr {
 
 %%
 
-int yyerror(char const *s){
-	printf("Error");
+int yyerror(char *s){
+	printf("Error\n");
+	return -1;
 }
 
 int main(int argc, char **argv){

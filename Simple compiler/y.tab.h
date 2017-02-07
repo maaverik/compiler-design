@@ -66,7 +66,9 @@ extern int yydebug;
     EQ = 276,
     SLIST = 277,
     BREAK = 278,
-    CONTINUE = 279
+    CONTINUE = 279,
+    BEG = 280,
+    END = 281
   };
 #endif
 /* Tokens.  */
@@ -92,6 +94,8 @@ extern int yydebug;
 #define SLIST 277
 #define BREAK 278
 #define CONTINUE 279
+#define BEG 280
+#define END 281
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
