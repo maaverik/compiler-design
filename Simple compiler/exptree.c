@@ -91,9 +91,10 @@ int evaluate(struct tnode *t){
 	    	break;
 	    case READ :
 	    	temp = t->Ptr1;
-			// if (var[name - 'a'] == NULL) {
-	  //       	var[name - 'a'] = (int *) malloc (sizeof(int));
-	  //   	}
+			if(Glookup(temp->NAME)  == NULL){
+				printf("Unallocated variable");
+				exit(0);
+			}
 	    	printf("Enter a value\n");
 	    	scanf("%d", Glookup((temp->NAME))->binding);
 	    	return 0;

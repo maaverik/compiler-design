@@ -16,7 +16,7 @@
 
 %token ID
 %token NUM
-%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE BEG END
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ SLIST BREAK CONTINUE BEG END INT DECL ENDDECL
 %nonassoc GT LT EQ
 %left PLUS
 %left MUL
@@ -24,8 +24,22 @@
 
 %%
 
-Program : BEG slist END {evaluate($2);exit(1);}
+Program : decls main {exit(1);}
+		| main {exit(1);}
      ;
+
+decls : DECL decllist ENDDECL {}
+	;
+decllist : decl decllist {}
+		| decl {}
+	;
+decl : INT ID ';' {
+			Ginstall($2->NAME, NUM, sizeof(int));
+		}
+	;
+main : BEG slist END {evaluate($2);}
+	;
+
 slist : slist stmt {$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);}
      | stmt {$$ = $1;}
      ;

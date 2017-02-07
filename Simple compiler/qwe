@@ -1,0 +1,9 @@
+decl
+	int i;
+enddecl
+
+begin
+	read(i);
+	write(i+6);
+end
+

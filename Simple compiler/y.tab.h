@@ -68,7 +68,10 @@ extern int yydebug;
     BREAK = 278,
     CONTINUE = 279,
     BEG = 280,
-    END = 281
+    END = 281,
+    INT = 282,
+    DECL = 283,
+    ENDDECL = 284
   };
 #endif
 /* Tokens.  */
@@ -96,6 +99,9 @@ extern int yydebug;
 #define CONTINUE 279
 #define BEG 280
 #define END 281
+#define INT 282
+#define DECL 283
+#define ENDDECL 284
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
