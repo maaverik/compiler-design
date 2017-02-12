@@ -1,18 +1,15 @@
 
 decl
 	int i;
-	bool x;
 enddecl
 
 begin
 	read(i);
-	x = true;
-	while (x == true) do
+	while (i < 20) do
 		write(i);
 		if (i == 10) then
 			i = i+1;
 			write(111);
-			x = false;
 			continue;
 			write(333);
 		endif;

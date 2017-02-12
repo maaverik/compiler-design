@@ -46,72 +46,64 @@ extern int yydebug;
   enum yytokentype
   {
     ID = 258,
-    READ = 259,
-    ASGN = 260,
-    NEWLINE = 261,
-    WRITE = 262,
-    PLUS = 263,
-    MUL = 264,
-    SUB = 265,
-    DIV = 266,
-    EVAL = 267,
-    IF = 268,
-    THEN = 269,
-    ELSE = 270,
-    WHILE = 271,
-    DO = 272,
-    ENDWHILE = 273,
-    ENDIF = 274,
-    LT = 275,
-    GT = 276,
-    EQ = 277,
-    NEQ = 278,
-    SLIST = 279,
-    BREAK = 280,
-    CONTINUE = 281,
-    BEG = 282,
-    END = 283,
+    NUM = 259,
+    READ = 260,
+    ASGN = 261,
+    NEWLINE = 262,
+    WRITE = 263,
+    PLUS = 264,
+    MUL = 265,
+    EVAL = 266,
+    IF = 267,
+    THEN = 268,
+    ELSE = 269,
+    WHILE = 270,
+    DO = 271,
+    ENDWHILE = 272,
+    ENDIF = 273,
+    LT = 274,
+    GT = 275,
+    EQ = 276,
+    NEQ = 277,
+    SLIST = 278,
+    BREAK = 279,
+    CONTINUE = 280,
+    BEG = 281,
+    END = 282,
+    INT = 283,
     DECL = 284,
-    ENDDECL = 285,
-    INT = 286,
-    BOOL = 287,
-    TRUE = 288,
-    FALSE = 289
+    ENDDECL = 285
   };
 #endif
 /* Tokens.  */
 #define ID 258
-#define READ 259
-#define ASGN 260
-#define NEWLINE 261
-#define WRITE 262
-#define PLUS 263
-#define MUL 264
-#define SUB 265
-#define DIV 266
-#define EVAL 267
-#define IF 268
-#define THEN 269
-#define ELSE 270
-#define WHILE 271
-#define DO 272
-#define ENDWHILE 273
-#define ENDIF 274
-#define LT 275
-#define GT 276
-#define EQ 277
-#define NEQ 278
-#define SLIST 279
-#define BREAK 280
-#define CONTINUE 281
-#define BEG 282
-#define END 283
+#define NUM 259
+#define READ 260
+#define ASGN 261
+#define NEWLINE 262
+#define WRITE 263
+#define PLUS 264
+#define MUL 265
+#define EVAL 266
+#define IF 267
+#define THEN 268
+#define ELSE 269
+#define WHILE 270
+#define DO 271
+#define ENDWHILE 272
+#define ENDIF 273
+#define LT 274
+#define GT 275
+#define EQ 276
+#define NEQ 277
+#define SLIST 278
+#define BREAK 279
+#define CONTINUE 280
+#define BEG 281
+#define END 282
+#define INT 283
 #define DECL 284
 #define ENDDECL 285
-#define INT 286
-#define BOOL 287
-#define TRUE 288
-#define FALSE 289
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

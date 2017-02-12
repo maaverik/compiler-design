@@ -27,19 +27,14 @@
 "break" {return BREAK;}
 "continue" {return CONTINUE;}
 "int" 	{return INT;}
-"bool"	{return BOOL;}
-"true" 	{yylval = TreeCreate(BOOL, BOOL, TRUE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
-"false"	{yylval = TreeCreate(BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "decl" 	{return DECL;}
 "enddecl" {return ENDDECL;}
 
 [=]     { return ASGN;}
 [+]		{return PLUS;}
 [*] 	{return MUL;}
-[-]		{return SUB;}
-[/]		{return DIV;}
 [);(] 	{return *yytext;}
-[ \t\n] {}
+[ \t\n] 	{}
 "<" 	{return LT;}
 ">" 	{return GT;}
 "==" 	{return EQ;}
@@ -49,6 +44,6 @@
 	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);
 	//Ginstall(temp, NUM, sizeof(int));
 	return ID;}
-[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return INT;}
+[0-9]+  { yylval = TreeCreate(-1, NUM, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return NUM;}
 
 %%

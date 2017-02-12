@@ -34,9 +34,7 @@ struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct t
 //struct tnode* makeLeafNode(int n);
 
 /*Make a tnode with opertor, left and right branches set*/
-struct tnode* makeOperatorNode(int op, int type, struct tnode *l, struct tnode *r);
+struct tnode* makeOperatorNode(int c,struct tnode *l,struct tnode *r);
 
 /*To evaluate an expression tree*/
 int evaluate(struct tnode *t);
-
-int toBool(int x);

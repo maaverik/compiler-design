@@ -17,31 +17,9 @@ struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct t
 	return temp;
 }
 
-struct tnode* makeOperatorNode(int op, int type, struct tnode *l, struct tnode *r){
-	struct tnode *temp = TreeCreate(type, op, -1, NULL, NULL, l, r, NULL);
+struct tnode* makeOperatorNode(int c,struct tnode *l,struct tnode *r){
+	struct tnode *temp = TreeCreate(-1, c, -1, NULL, NULL, l, r, NULL);
 	return temp;
-}
-
-int toBool(int x){
-	if (x == 1)
-		return TRUE;
-	else if (x == 0)
-		return FALSE;
-	else{
-		printf("Not 1 or 0\n");
-		return -1;
-	}
-}
-
-int toInt(int x){
-	if (x == TRUE)
-		return 1;
-	else if (x == FALSE)
-		return 0;
-	else{
-		printf("Not TRUE or FALSE\n");
-		return -1;
-	}
 }
 
 
@@ -49,30 +27,19 @@ int evaluate(struct tnode *t){
 	int value, tmp;
 	struct tnode *temp;
 	switch(t->NODETYPE){
-		case INT : return t->VALUE;
-			break;
-		case BOOL : return t->VALUE;
+		case NUM : return t->VALUE;
 			break;
 		case PLUS : return evaluate(t->Ptr1) + evaluate(t->Ptr2);
 			break;
 		case MUL : return evaluate(t->Ptr1) * evaluate(t->Ptr2);
 			break;
-		case SUB : return evaluate(t->Ptr1) - evaluate(t->Ptr2);
+		case EQ : return evaluate(t->Ptr1) == evaluate(t->Ptr2);
 			break;
-		case DIV : value = evaluate(t->Ptr2);
-			if (value != 0)
-				return evaluate(t->Ptr1) / value;
-			else
-				printf("inf\n");
-				return -1;
+		case NEQ : return evaluate(t->Ptr1) != evaluate(t->Ptr2);
 			break;
-		case EQ : return toBool(evaluate(t->Ptr1) == evaluate(t->Ptr2));
+		case LT : return evaluate(t->Ptr1) < evaluate(t->Ptr2);
 			break;
-		case NEQ : return toBool(evaluate(t->Ptr1) != evaluate(t->Ptr2));
-			break;
-		case LT : return toBool(evaluate(t->Ptr1) < evaluate(t->Ptr2));
-			break;
-		case GT : return toBool(evaluate(t->Ptr1) > evaluate(t->Ptr2));
+		case GT : return evaluate(t->Ptr1) > evaluate(t->Ptr2);
 			break;
 		case BREAK : return BREAK;
 			break;
@@ -80,7 +47,7 @@ int evaluate(struct tnode *t){
 			break;
 		case IF:
 			value  = evaluate(t->Ptr1); // 0 or 1
-			if (toInt(value)) {
+			if (value) {
 				return evaluate(t->Ptr2);
 			}
 			else if (t->Ptr3 != NULL){
@@ -89,12 +56,14 @@ int evaluate(struct tnode *t){
 			return 0;
 			break;
 		case WHILE :
-			while (toInt(evaluate(t->Ptr1))) {
+			while (evaluate(t->Ptr1)) {
 				tmp = evaluate(t->Ptr2);
 				if (tmp == BREAK){
+					printf("broken\n");
 					break;
 				}
 				else if (tmp == CONTINUE){
+					printf("cont\n");
 					continue;
 				}
 			}
@@ -106,18 +75,13 @@ int evaluate(struct tnode *t){
 		case ASGN :
 			temp = t->Ptr1;
 	    	value = evaluate(t -> Ptr2);
-	    	if (Glookup((temp -> NAME)) == NULL) {
-	    	  printf("Unallocated variable %s", temp->NAME);
-	          exit(-1);
-	        }
 	    	*(Glookup(temp->NAME)->binding) = value;
 	    	return 0;
 	    	break;
 	    case ID :
 	    	 if (Glookup((t -> NAME)) == NULL) {
-	    	  printf("Unallocated variable %s", t->NAME);
 	          exit(-1);
-	         }
+	        }
 	        else {
 	          return *(Glookup((t -> NAME))->binding);
 	        }
@@ -126,8 +90,8 @@ int evaluate(struct tnode *t){
 	    case READ :
 	    	temp = t->Ptr1;
 			if(Glookup(temp->NAME)  == NULL){
-				printf("Unallocated variable %s", temp->NAME);
-				exit(-1);
+				printf("Unallocated variable");
+				exit(0);
 			}
 	    	printf("Enter a value\n");
 	    	scanf("%d", Glookup((temp->NAME))->binding);
@@ -145,10 +109,6 @@ int evaluate(struct tnode *t){
 	        else if (tmp == CONTINUE)
 	        	return CONTINUE;
 	        return evaluate(t->Ptr2);
-	        break;
-	    default:
-	    	printf("Unrecognised case\n");
-	    	return -1;
 	}
 	return -1;
 }

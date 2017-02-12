@@ -14,13 +14,12 @@
 //  char character;
 //};
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL TRUE FALSE
+%token ID
+%token NUM
+%token READ ASGN NEWLINE WRITE PLUS MUL EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END INT DECL ENDDECL
 %nonassoc GT LT EQ NEQ
 %left PLUS
 %left MUL
-%left SUB
-%left DIV
-
 
 
 %%
@@ -32,14 +31,11 @@ Program : decls main {}
 decls : DECL decllist ENDDECL {}
 	;
 decllist : decl decllist {}
-	| decl {}
+		| decl {}
 	;
 decl : INT ID ';' {
-			Ginstall($2->NAME, INT, sizeof(int));
+			Ginstall($2->NAME, NUM, sizeof(int));
 		}
-	| BOOL ID ';' {
-			Ginstall($2->NAME, BOOL, sizeof(int));
-	}
 	;
 main : BEG slist END {evaluate($2); exit(1);}
 	;
@@ -79,44 +75,39 @@ stmt: ID ASGN expr ';'	{
 
 		;
 
-expr: expr PLUS expr {$$ = makeOperatorNode(PLUS, INT, $1, $3);}
-
-	 | expr MUL expr {$$ = makeOperatorNode(MUL, INT, $1, $3);}
-
-	 | expr SUB expr {$$ = makeOperatorNode(SUB, INT, $1, $3);}
-
-	 | expr DIV expr {$$ = makeOperatorNode(DIV, INT, $1, $3);}
+expr: expr PLUS expr {
+		$$ = makeOperatorNode(PLUS, $1, $3);
+	}
+	 | expr MUL expr {$$ = makeOperatorNode(MUL, $1, $3);}
 
 	 | '(' expr ')'	{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
 
-	 | INT {$$ = $1;}
-
-	 | BOOL {$$ = $1;}
+	 | NUM {$$ = $1;}
 
 	 | ID {$$ = $1;}
 
 	 | expr LT expr {
-		 $$ = makeOperatorNode(LT, BOOL, $1, $3);
+		 $$ = makeOperatorNode(LT, $1, $3);
 	 }
 
 	 | expr GT expr {
-		 $$ = makeOperatorNode(GT, BOOL, $1, $3);
+		 $$ = makeOperatorNode(GT, $1, $3);
 	 }
 
 	 | expr EQ expr {
-		 $$ = makeOperatorNode(EQ, BOOL, $1, $3);
+		 $$ = makeOperatorNode(EQ, $1, $3);
 	 }
 	 ;
 
 	 | expr NEQ expr {
-		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
+		 $$ = makeOperatorNode(NEQ, $1, $3);
 	 }
 	 ;
 
 %%
 
 int yyerror(char *s){
-	printf("Error: %s\n", s);
+	printf("Error\n");
 	return -1;
 }
 
