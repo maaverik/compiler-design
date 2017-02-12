@@ -1,16 +1,19 @@
 
 decl
         int i;
+	int x;
+	int a[10];
 enddecl
 
 begin
-        read(i);
-        while (i < 20) do 
-                write(i);
+        i = 0;
+	
+        while (i < 5) do 
+		read(x);
+		a[i] = x;
+                write(a[i]);
                 i = i+1;
         endwhile;
 
-
-        write(i+1);
 end
 

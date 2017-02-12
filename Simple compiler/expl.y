@@ -14,7 +14,7 @@
 //  char character;
 //};
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL TRUE FALSE
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
 %nonassoc GT LT EQ NEQ
 %left PLUS
 %left MUL
@@ -34,12 +34,11 @@ decls : DECL decllist ENDDECL {}
 decllist : decl decllist {}
 	| decl {}
 	;
-decl : INT ID ';' {
-			Ginstall($2->NAME, INT, sizeof(int));
-		}
-	| BOOL ID ';' {
-			Ginstall($2->NAME, BOOL, sizeof(int));
-	}
+decl : INT ID ';' {	Ginstall($2->NAME, INT, sizeof(int));}
+
+	| BOOL ID ';' {	Ginstall($2->NAME, BOOL, sizeof(int));}
+
+	| INT ID '[' INT ']' ';'{ Ginstall($2->NAME, BOOL, sizeof(int)*$4->VALUE); }
 	;
 main : BEG slist END {evaluate($2); exit(1);}
 	;
@@ -76,6 +75,9 @@ stmt: ID ASGN expr ';'	{
 		| CONTINUE ';' {
 			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
 		}
+		| ID '[' expr ']' ASGN expr ';'	{
+       		$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
+ 		}
 
 		;
 
@@ -94,6 +96,8 @@ expr: expr PLUS expr {$$ = makeOperatorNode(PLUS, INT, $1, $3);}
 	 | BOOL {$$ = $1;}
 
 	 | ID {$$ = $1;}
+
+	 | ID '[' expr ']'	{ $$ = makeOperatorNode(ARRVAL, INT, $1, $3); }
 
 	 | expr LT expr {
 		 $$ = makeOperatorNode(LT, BOOL, $1, $3);

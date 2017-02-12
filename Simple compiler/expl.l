@@ -40,6 +40,7 @@
 [/]		{return DIV;}
 [);(] 	{return *yytext;}
 [ \t\n] {}
+("["|"]")	{return *yytext;}
 "<" 	{return LT;}
 ">" 	{return GT;}
 "==" 	{return EQ;}

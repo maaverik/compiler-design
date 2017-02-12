@@ -1,3 +1,8 @@
+#define TRUE 5001
+#define FALSE 5002
+#define ARRASGN 5003
+#define ARRVAL 5004
+
 struct Gsymbol{
   char *name;               //name of the variable or function
   int type;   //pointer to the Typetable entry of variable type/return type of the function

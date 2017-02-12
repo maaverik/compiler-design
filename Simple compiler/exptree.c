@@ -2,6 +2,7 @@
 #include "exptree.h"
 #include "sym_table.c"
 
+
 //int *var[26];
 
 struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
@@ -146,6 +147,19 @@ int evaluate(struct tnode *t){
 	        	return CONTINUE;
 	        return evaluate(t->Ptr2);
 	        break;
+	  	case ARRASGN:
+ 			if(Glookup(t->NAME)  == NULL) {
+ 				printf("Unallocated variable '%s'", t->NAME);
+ 				exit(-1);
+ 			}
+ 			*(Glookup(t->NAME)->binding + evaluate(t->Ptr1)) = evaluate(t->Ptr2);
+ 			return 0;
+ 			break;
+ 		case ARRVAL:
+ 			value = evaluate(t->Ptr2);
+ 			return *((Glookup(t->Ptr1->NAME)->binding) + value);
+ 			break;
+
 	    default:
 	    	printf("Unrecognised case\n");
 	    	return -1;
