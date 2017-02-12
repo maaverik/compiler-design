@@ -1,7 +1,7 @@
 
 decl
         int i;
-	int x;
+	int xy;
 	int a[10];
 enddecl
 
@@ -9,8 +9,8 @@ begin
         i = 0;
 	
         while (i < 5) do 
-		read(x);
-		a[i] = x;
+		read(xy);
+		a[i] = xy;
                 write(a[i]);
                 i = i+1;
         endwhile;

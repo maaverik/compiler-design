@@ -39,9 +39,7 @@ void Ginstall(char* name, int type, int size) {
  	i->type = type;
  	i->size = size;
 
- 	if(type == INT)		// integer
- 		i->binding = malloc(sizeof(int));
- 	else if (type == BOOL)
+ 	if(type == INT || type == BOOL || type == INTARR)		// integer
  		i->binding = malloc(sizeof(int));
  	else
  		printf("Wrong type\n");

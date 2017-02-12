@@ -38,15 +38,31 @@ decl : INT ID ';' {	Ginstall($2->NAME, INT, sizeof(int));}
 
 	| BOOL ID ';' {	Ginstall($2->NAME, BOOL, sizeof(int));}
 
-	| INT ID '[' INT ']' ';'{ Ginstall($2->NAME, BOOL, sizeof(int)*$4->VALUE); }
+	| INT ID '[' INT ']' ';'{ Ginstall($2->NAME, INTARR, sizeof(int)*$4->VALUE); }
 	;
 main : BEG slist END {evaluate($2); exit(1);}
 	;
 
-slist : slist stmt {$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);}
-     | stmt {$$ = $1;}
-     ;
+slist : slist stmt {
+		if($1->TYPE != -1 || $2->TYPE != -1){
+			printf("Type error\n");
+			exit(-1);
+		}
+		$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);
+	}
+    | stmt {
+     	if($1->TYPE != -1){
+     		printf("Type error\n");
+			exit(-1);
+     	}
+     	$$ = $1;
+    }
+    ;
 stmt: ID ASGN expr ';'	{
+			if(Glookup($1->NAME)->type != $3->TYPE){
+				printf("type error: =\n");
+				exit(0);
+			}
 			$$ = TreeCreate(-1, ASGN, -1, NULL, NULL, $1, $3, NULL);
 		}
 
@@ -59,14 +75,42 @@ stmt: ID ASGN expr ';'	{
 		}
 
 		| IF '(' expr ')' THEN slist ELSE slist ENDIF ';' {
+			if($3->TYPE != BOOL){
+				printf("type error: IF\n");
+				exit(0);
+			}
+			if($6->TYPE != -1){
+				printf("type error: THEN\n");
+				exit(0);
+			}
+			if($8->TYPE != -1){
+				printf("type error: ELSE\n");
+				exit(0);
+			}
 			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, $8);
 		}
 
 		| IF '(' expr ')' THEN slist ENDIF ';' {
+			if($3->TYPE != BOOL){
+				printf("type error: IF\n");
+				exit(0);
+			}
+			if($6->TYPE != -1){
+				printf("type error: THEN\n");
+				exit(0);
+			}
 			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, NULL);
 		}
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
+			if($3->TYPE != BOOL){
+				printf("type error: IF\n");
+				exit(0);
+			}
+			if($6->TYPE != -1){
+				printf("type error: THEN\n");
+				exit(0);
+			}
 			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
 		}
 		| BREAK ';' {
@@ -76,18 +120,46 @@ stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
 		}
 		| ID '[' expr ']' ASGN expr ';'	{
-       		$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
+			if(Glookup($1->NAME)->type != INTARR || $3->TYPE != INT || $6->TYPE != INT){
+				printf("type error: []=\n");
+				exit(0);
+	 		}
+			$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
  		}
 
 		;
 
-expr: expr PLUS expr {$$ = makeOperatorNode(PLUS, INT, $1, $3);}
+expr: expr PLUS expr {
+		if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: +\n");
+			exit(0);
+		}
+		$$ = makeOperatorNode(PLUS, INT, $1, $3);
+	}
 
-	 | expr MUL expr {$$ = makeOperatorNode(MUL, INT, $1, $3);}
+	 | expr MUL expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: *\n");
+			exit(0);
+		}
+		$$ = makeOperatorNode(MUL, INT, $1, $3);
+	}
 
-	 | expr SUB expr {$$ = makeOperatorNode(SUB, INT, $1, $3);}
+	 | expr SUB expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: -\n");
+			exit(0);
+		}
+		$$ = makeOperatorNode(SUB, INT, $1, $3);
+	}
 
-	 | expr DIV expr {$$ = makeOperatorNode(DIV, INT, $1, $3);}
+	 | expr DIV expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: /\n");
+			exit(0);
+		}
+		$$ = makeOperatorNode(DIV, INT, $1, $3);
+	}
 
 	 | '(' expr ')'	{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
 
@@ -95,24 +167,49 @@ expr: expr PLUS expr {$$ = makeOperatorNode(PLUS, INT, $1, $3);}
 
 	 | BOOL {$$ = $1;}
 
-	 | ID {$$ = $1;}
+	 | ID {
+	 	$1->TYPE = Glookup($1->NAME)->type;
+	 	$$ = $1;
+	 }
 
-	 | ID '[' expr ']'	{ $$ = makeOperatorNode(ARRVAL, INT, $1, $3); }
+	 | ID '[' expr ']'	{
+	 	if($3->TYPE != INT){
+	 		printf("type error: []\n");
+			exit(0);
+	 	}
+	 	$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 }
 
 	 | expr LT expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: <\n");
+			exit(0);
+		}
 		 $$ = makeOperatorNode(LT, BOOL, $1, $3);
 	 }
 
 	 | expr GT expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: >\n");
+			exit(0);
+		}
 		 $$ = makeOperatorNode(GT, BOOL, $1, $3);
 	 }
 
 	 | expr EQ expr {
+	 	if(!(($1->TYPE == INT && $3->TYPE == INT) || ($1->TYPE == BOOL && $3->TYPE == BOOL))){
+			printf("type error: ==\n");
+			exit(0);
+		}
 		 $$ = makeOperatorNode(EQ, BOOL, $1, $3);
 	 }
 	 ;
 
 	 | expr NEQ expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: !=\n");
+			exit(0);
+		}
 		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
 	 }
 	 ;
