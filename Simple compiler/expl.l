@@ -26,8 +26,8 @@
 "endif" {return ENDIF;}
 "break" {return BREAK;}
 "continue" {return CONTINUE;}
-"int" 	{return INT;}
-"bool"	{return BOOL;}
+"integer" 	{return INT;}
+"boolean"	{return BOOL;}
 "true" 	{yylval = TreeCreate(BOOL, BOOL, TRUE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "false"	{yylval = TreeCreate(BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "decl" 	{return DECL;}

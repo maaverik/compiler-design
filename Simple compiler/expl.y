@@ -38,8 +38,24 @@ decl : INT ID ';' {	Ginstall($2->NAME, INT, sizeof(int));}
 
 	| BOOL ID ';' {	Ginstall($2->NAME, BOOL, sizeof(int));}
 
-	| INT ID '[' INT ']' ';'{ Ginstall($2->NAME, INTARR, sizeof(int)*$4->VALUE); }
+	| INT ID '[' INT ']' ';'{
+		if ($4->TYPE != INT) {
+			printf("Type error in int array declaration.\n");
+			exit(-1);
+		}
+		Ginstall($2->NAME, INTARR, sizeof(int)*$4->VALUE);
+	}
 	;
+
+	| BOOL ID '[' INT ']' ';'{
+		if ($4->TYPE != INT) {
+			printf("Type error in bool array declaration.\n");
+			exit(-1);
+		}
+		Ginstall($2->NAME, BOOLARR, sizeof(int)*$4->VALUE);
+	}
+	;
+
 main : BEG slist END {evaluate($2); exit(1);}
 	;
 
@@ -120,7 +136,7 @@ stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
 		}
 		| ID '[' expr ']' ASGN expr ';'	{
-			if(Glookup($1->NAME)->type != INTARR || $3->TYPE != INT || $6->TYPE != INT){
+			if(!(Glookup($1->NAME)->type == INTARR || $3->TYPE == INT || $6->TYPE == INT) && !(Glookup($1->NAME)->type == BOOLARR || $3->TYPE == BOOL || $6->TYPE == BOOL)){
 				printf("type error: []=\n");
 				exit(0);
 	 		}
@@ -177,7 +193,17 @@ expr: expr PLUS expr {
 	 		printf("type error: []\n");
 			exit(0);
 	 	}
-	 	$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 	if(Glookup($1->NAME)->type == INTARR){
+	 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 	}
+	 	else if(Glookup($1->NAME)->type == BOOLARR){
+	 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 	}
+	 	else {
+	 		printf("Type error array lookup");
+	 		exit(-1);
+	 	}
+
 	 }
 
 	 | expr LT expr {

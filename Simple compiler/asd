@@ -1,8 +1,8 @@
 
 decl
-        int i;
-	int xy;
-	int a[10];
+        integer i;
+	integer xy;
+	integer a[10];
 enddecl
 
 begin

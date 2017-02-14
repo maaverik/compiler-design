@@ -130,13 +130,26 @@ int evaluate(struct tnode *t){
 				printf("Unallocated variable %s", temp->NAME);
 				exit(-1);
 			}
+			if(Glookup(temp->NAME)->type  != INT){
+				printf("Cannot read non-integer variable %s", temp->NAME);
+				exit(-1);
+			}
 	    	printf("Enter a value\n");
-	    	scanf("%d", Glookup((temp->NAME))->binding);
+	    	if(!scanf("%d", Glookup((temp->NAME))->binding)){
+	    		printf("Invalid input\n");
+	    		exit(-1);
+	    	}
 	    	return 0;
 	    	break;
 	    case WRITE :
 	    	temp = t->Ptr1;
-	    	printf("%d\n",evaluate(temp));
+	    	value = evaluate(temp);
+			if (value == TRUE)
+				printf("true\n");
+			else if (value == FALSE)
+				printf("false\n");
+	    	else
+		    	printf("%d\n",value);
 	    	return 0;
 	    	break;
 	    case SLIST:

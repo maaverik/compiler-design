@@ -3,6 +3,7 @@
 #define ARRASGN 5003
 #define ARRVAL 5004
 #define INTARR 5005
+#define BOOLARR 5006
 
 struct Gsymbol{
   char *name;               //name of the variable or function

@@ -1,7 +1,7 @@
 
 decl
-	int i;
-	bool x;
+	integer i;
+	boolean x;
 enddecl
 
 begin
