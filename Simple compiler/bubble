@@ -3,6 +3,10 @@ decl
         boolean b;  
 enddecl
 begin
+	b = false;
+	if (b) then
+		write(b);
+	endif;
 	read(n);
 	i=0;
 	while(i<n) do

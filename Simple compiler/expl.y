@@ -7,6 +7,8 @@
 
 	int yylex();
 	int yyerror(char *);
+
+	int var_type;
 %}
 
 //%union{
@@ -32,45 +34,34 @@ decls : DECL decllist ENDDECL {}
 decllist : decl decllist {}
 	| decl {}
 	;
-decl : INT intlist ';' {}
-	| BOOL boollist ';' {}
+decl : type varlist ';' {}
 	;
 
-intlist : intlist ',' ID {Ginstall($3->NAME, INT, sizeof(int));}
-	| intlist ',' ID '[' INT ']' {
+type : INT { var_type = INT;}
+	| BOOL {var_type = BOOL;}
+
+varlist : varlist ',' ID {Ginstall($3->NAME, INT, sizeof(int));}
+	| varlist ',' ID '[' INT ']' {
 		if ($5->TYPE != INT) {
-			printf("Type error in int array declaration.\n");
+			printf("Type error in array declaration.\n");
 			exit(-1);
 		}
-		Ginstall($3->NAME, INTARR, sizeof(int)*$5->VALUE);
+		if (var_type == INT)
+			Ginstall($3->NAME, INTARR, sizeof(int)*$5->VALUE);
+		else
+			Ginstall($3->NAME, BOOLARR, sizeof(int)*$5->VALUE);
 	}
 	| ID '[' INT ']' {
 		if ($3->TYPE != INT) {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
-		Ginstall($1->NAME, INTARR, sizeof(int)*$3->VALUE);
-
+		if (var_type == INT)
+			Ginstall($1->NAME, INTARR, sizeof(int)*$3->VALUE);
+		else
+			Ginstall($1->NAME, BOOLARR, sizeof(int)*$3->VALUE);
 	}
-	| ID {Ginstall($1->NAME, INT, sizeof(int));}
-	;
-
-boollist : boollist ',' ID {Ginstall($3->NAME, BOOL, sizeof(int));}
-	| boollist ',' ID '[' INT ']' {
-		if ($5->TYPE != INT) {
-			printf("Type error in bool array declaration.\n");
-			exit(-1);
-		}
-		Ginstall($3->NAME, BOOLARR, sizeof(int)*$5->VALUE);
-	}
-	| ID '[' INT ']' {
-		if ($3->TYPE != INT) {
-			printf("Type error in bool array declaration.\n");
-			exit(-1);
-		}
-		Ginstall($1->NAME, BOOLARR, sizeof(int)*$3->VALUE);
-	}
-	| 	ID {Ginstall($1->NAME, BOOL, sizeof(int));}
+	| ID {Ginstall($1->NAME, var_type, sizeof(int));}
 	;
 
 main : BEG slist END {evaluate($2); exit(1);}
