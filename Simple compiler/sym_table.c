@@ -20,13 +20,11 @@ struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 void Ginstall(char* name, int type, int size) {
  	struct Gsymbol *i;
 
- 	if (GST == NULL)
- 	{
+ 	if (GST == NULL) {
  		GST = malloc(sizeof(struct Gsymbol));
  		i = GST;
  	}
- 	else
- 	{
+ 	else {
  		i = GST;
  		while(i->next != NULL)
  			i = i->next;
@@ -39,7 +37,7 @@ void Ginstall(char* name, int type, int size) {
  	i->type = type;
  	i->size = size;
 
- 	if(type == INT || type == BOOL || type == INTARR)		// integer
+ 	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR)		// integer
  		i->binding = malloc(sizeof(int));
  	else
  		printf("Wrong type\n");

@@ -2,7 +2,6 @@
 #include "exptree.h"
 #include "sym_table.c"
 
-
 //int *var[26];
 
 struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
@@ -28,7 +27,7 @@ int toBool(int x){
 		return TRUE;
 	else if (x == 0)
 		return FALSE;
-	else{
+	else {
 		printf("Not 1 or 0\n");
 		return -1;
 	}

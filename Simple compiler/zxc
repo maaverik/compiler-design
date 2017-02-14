@@ -1,0 +1,17 @@
+decl
+        integer i;
+        integer xy;
+        integer a[10];
+enddecl
+
+begin
+        i = 5;
+
+        while (true) do
+                read(xy);
+                a[i] = xy;
+                write(a[i]);
+                i = i+1;
+        endwhile;
+
+end

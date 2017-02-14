@@ -16,10 +16,8 @@
 
 %token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
 %nonassoc GT LT EQ NEQ
-%left PLUS
-%left MUL
-%left SUB
-%left DIV
+%left PLUS SUB
+%left MUL DIV
 
 
 
@@ -34,26 +32,45 @@ decls : DECL decllist ENDDECL {}
 decllist : decl decllist {}
 	| decl {}
 	;
-decl : INT ID ';' {	Ginstall($2->NAME, INT, sizeof(int));}
+decl : INT intlist ';' {}
+	| BOOL boollist ';' {}
+	;
 
-	| BOOL ID ';' {	Ginstall($2->NAME, BOOL, sizeof(int));}
-
-	| INT ID '[' INT ']' ';'{
-		if ($4->TYPE != INT) {
+intlist : intlist ',' ID {Ginstall($3->NAME, INT, sizeof(int));}
+	| intlist ',' ID '[' INT ']' {
+		if ($5->TYPE != INT) {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
-		Ginstall($2->NAME, INTARR, sizeof(int)*$4->VALUE);
+		Ginstall($3->NAME, INTARR, sizeof(int)*$5->VALUE);
 	}
+	| ID '[' INT ']' {
+		if ($3->TYPE != INT) {
+			printf("Type error in int array declaration.\n");
+			exit(-1);
+		}
+		Ginstall($1->NAME, INTARR, sizeof(int)*$3->VALUE);
+
+	}
+	| ID {Ginstall($1->NAME, INT, sizeof(int));}
 	;
 
-	| BOOL ID '[' INT ']' ';'{
-		if ($4->TYPE != INT) {
+boollist : boollist ',' ID {Ginstall($3->NAME, BOOL, sizeof(int));}
+	| boollist ',' ID '[' INT ']' {
+		if ($5->TYPE != INT) {
 			printf("Type error in bool array declaration.\n");
 			exit(-1);
 		}
-		Ginstall($2->NAME, BOOLARR, sizeof(int)*$4->VALUE);
+		Ginstall($3->NAME, BOOLARR, sizeof(int)*$5->VALUE);
 	}
+	| ID '[' INT ']' {
+		if ($3->TYPE != INT) {
+			printf("Type error in bool array declaration.\n");
+			exit(-1);
+		}
+		Ginstall($1->NAME, BOOLARR, sizeof(int)*$3->VALUE);
+	}
+	| 	ID {Ginstall($1->NAME, BOOL, sizeof(int));}
 	;
 
 main : BEG slist END {evaluate($2); exit(1);}
@@ -75,6 +92,7 @@ slist : slist stmt {
     }
     ;
 stmt: ID ASGN expr ';'	{
+
 			if(Glookup($1->NAME)->type != $3->TYPE){
 				printf("type error: =\n");
 				exit(0);
@@ -82,9 +100,10 @@ stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, ASGN, -1, NULL, NULL, $1, $3, NULL);
 		}
 
-		| READ '(' ID ')' ';'	{
+		| READ '(' ID ')' ';' {
 			$$ = TreeCreate(-1, READ, -1, NULL, NULL, $3, NULL, NULL);
 		}
+
 
 		| WRITE '(' expr ')' ';' {
 			$$ = TreeCreate(-1, WRITE, -1, NULL, NULL, $3, NULL, NULL);
@@ -120,11 +139,11 @@ stmt: ID ASGN expr ';'	{
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
 			if($3->TYPE != BOOL){
-				printf("type error: IF\n");
+				printf("type error: WHILE\n");
 				exit(0);
 			}
 			if($6->TYPE != -1){
-				printf("type error: THEN\n");
+				printf("type error: DO\n");
 				exit(0);
 			}
 			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
@@ -142,7 +161,6 @@ stmt: ID ASGN expr ';'	{
 	 		}
 			$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
  		}
-
 		;
 
 expr: expr PLUS expr {

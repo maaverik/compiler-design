@@ -40,6 +40,7 @@
 [/]		{return DIV;}
 [);(] 	{return *yytext;}
 [ \t\n] {}
+","	{return *yytext;}
 ("["|"]")	{return *yytext;}
 "<" 	{return LT;}
 ">" 	{return GT;}
@@ -50,6 +51,6 @@
 	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);
 	//Ginstall(temp, NUM, sizeof(int));
 	return ID;}
-[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return INT;}
+"-"?[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return INT;}
 
 %%
