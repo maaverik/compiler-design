@@ -107,7 +107,7 @@ int evaluate(struct tnode *t){
 			temp = t->Ptr1;
 	    	value = evaluate(t -> Ptr2);
 	    	if (Glookup((temp -> NAME)) == NULL) {
-	    	  printf("Unallocated variable %s", temp->NAME);
+	    	  printf("Unallocated variable %s\n", temp->NAME);
 	          exit(-1);
 	        }
 	    	*(Glookup(temp->NAME)->binding) = value;
@@ -115,7 +115,7 @@ int evaluate(struct tnode *t){
 	    	break;
 	    case ID :
 	    	 if (Glookup((t -> NAME)) == NULL) {
-	    	  printf("Unallocated variable %s", t->NAME);
+	    	  printf("Unallocated variable %s\n", t->NAME);
 	          exit(-1);
 	         }
 	        else {
@@ -170,6 +170,15 @@ int evaluate(struct tnode *t){
  		case ARRVAL:
  			value = evaluate(t->Ptr2);
  			return *((Glookup(t->Ptr1->NAME)->binding) + value);
+ 			break;
+ 		case ARRREAD:
+ 			if(Glookup(t->NAME)  == NULL) {
+ 				printf("Unallocated variable '%s'", t->NAME);
+ 				exit(0);
+ 			}
+ 			value = evaluate(t->Ptr1);
+ 			scanf("%d", (Glookup(t->NAME) -> binding)+value);
+ 			return 0;
  			break;
 
 	    default:

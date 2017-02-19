@@ -82,7 +82,7 @@ slist : slist stmt {
      	$$ = $1;
     }
     ;
-stmt: ID ASGN expr ';'	{
+stmt: 	ID ASGN expr ';'	{
 
 			if(Glookup($1->NAME)->type != $3->TYPE){
 				printf("type error: =\n");
@@ -95,6 +95,17 @@ stmt: ID ASGN expr ';'	{
 			$$ = TreeCreate(-1, READ, -1, NULL, NULL, $3, NULL, NULL);
 		}
 
+		| READ '(' ID '[' expr ']' ')' ';' 	{
+			if($5->TYPE != INT) {
+				printf("type error: ARRREAD[expr]");
+				exit(0);
+			}
+			if(Glookup($3->NAME)->type != INTARR && Glookup($3->NAME)->type != BOOLARR)	{
+				printf("type error: ARRREAD");
+				exit(0);
+			}
+	 	 	$$ = TreeCreate(-1, ARRREAD, 0, $3->NAME, NULL, $5, NULL, NULL);
+		}
 
 		| WRITE '(' expr ')' ';' {
 			$$ = TreeCreate(-1, WRITE, -1, NULL, NULL, $3, NULL, NULL);
@@ -139,14 +150,17 @@ stmt: ID ASGN expr ';'	{
 			}
 			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
 		}
+
 		| BREAK ';' {
 			$$ = TreeCreate(-1, BREAK, -1, NULL, NULL, NULL, NULL, NULL);
 		}
+
 		| CONTINUE ';' {
 			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
 		}
+
 		| ID '[' expr ']' ASGN expr ';'	{
-			if(!(Glookup($1->NAME)->type == INTARR || $3->TYPE == INT || $6->TYPE == INT) && !(Glookup($1->NAME)->type == BOOLARR || $3->TYPE == BOOL || $6->TYPE == BOOL)){
+			if(!(Glookup($1->NAME)->type == INTARR || $3->TYPE == INT || $6->TYPE == INT) && !(Glookup($1->NAME)->type == BOOLARR || $3->TYPE == INT || $6->TYPE == BOOL)){
 				printf("type error: []=\n");
 				exit(0);
 	 		}
@@ -193,6 +207,10 @@ expr: expr PLUS expr {
 	 | BOOL {$$ = $1;}
 
 	 | ID {
+	 	if (Glookup($1->NAME) == NULL){
+	 		printf("Undeclared variable %s\n", $1->NAME);
+	 		exit(-1);
+	 	}
 	 	$1->TYPE = Glookup($1->NAME)->type;
 	 	$$ = $1;
 	 }
@@ -202,11 +220,15 @@ expr: expr PLUS expr {
 	 		printf("type error: []\n");
 			exit(0);
 	 	}
+	 	if (Glookup($1->NAME) == NULL){
+	 		printf("Undeclared variable %s\n", $1->NAME);
+	 		exit(-1);
+	 	}
 	 	if(Glookup($1->NAME)->type == INTARR){
 	 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
 	 	}
 	 	else if(Glookup($1->NAME)->type == BOOLARR){
-	 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
 	 	}
 	 	else {
 	 		printf("Type error array lookup");

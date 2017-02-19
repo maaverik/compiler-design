@@ -26,8 +26,13 @@ void Ginstall(char* name, int type, int size) {
  	}
  	else {
  		i = GST;
- 		while(i->next != NULL)
+ 		while(i->next != NULL){
+ 			if (name == i -> name){
+	 			printf("Variable %s already declared once\n", name);
+	 			exit(-1);
+	 		}
  			i = i->next;
+	 	}
 
  		i->next = malloc(sizeof(struct Gsymbol));
  		i = i->next;
