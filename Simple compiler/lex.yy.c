@@ -990,7 +990,7 @@ YY_RULE_SETUP
 case 34:
 YY_RULE_SETUP
 #line 54 "expl.l"
-{ yylval = TreeCreate(INT, INT, atoi(yytext), NULL, NULL, NULL, NULL, NULL); return INT;}
+{ yylval = TreeCreate(INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP

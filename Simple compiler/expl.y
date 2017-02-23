@@ -3,6 +3,7 @@
 	#include <stdlib.h>
 	#include "exptree.h"
 	#include "sym_table.h"
+	#include "codegen.h"
 
 	#define YYSTYPE struct tnode*
 
@@ -15,7 +16,7 @@
 %}
 
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
 %nonassoc GT LT EQ NEQ
 %left PLUS SUB
 %left MUL DIV
@@ -62,7 +63,7 @@ varlist : varlist ',' ID {Ginstall($3->NAME, INT, 1);}
 	| ID {Ginstall($1->NAME, var_type, 1);}
 	;
 
-main : BEG slist END {evaluate($2); exit(1);}
+main : BEG slist END {printheader(); evaluate($2); printfooter(); exit(0);}
 	;
 
 slist : slist stmt {
@@ -70,7 +71,7 @@ slist : slist stmt {
 			printf("Type error\n");
 			exit(-1);
 		}
-		$$ = TreeCreate(-1, SLIST, -1, NULL, NULL, $1, $2, NULL);
+		$$ = TreeCreate(-1, STMT, -1, NULL, NULL, $1, $2, NULL);
 	}
     | stmt {
      	if($1->TYPE != -1){
@@ -80,20 +81,31 @@ slist : slist stmt {
      	$$ = $1;
     }
     ;
-stmt: 	ID ASGN expr ';'	{
-
+stmt: 	ID ASGN expr ';' {
+			if(Glookup($1->NAME) == NULL){
+				printf("Unallocated variable '%s'", $1->NAME);
+				exit(0);
+			}
 			if(Glookup($1->NAME)->type != $3->TYPE){
 				printf("type error: =\n");
 				exit(0);
 			}
-			$$ = TreeCreate(-1, ASGN, -1, NULL, NULL, $1, $3, NULL);
+			$$ = TreeCreate(-1, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
 
 		| READ '(' ID ')' ';' {
-			$$ = TreeCreate(-1, READ, -1, NULL, NULL, $3, NULL, NULL);
+			if(Glookup($3->NAME) == NULL){
+				printf("Unallocated variable '%s'", $3->NAME);
+				exit(0);
+			}
+			$$ = TreeCreate(-1, READ, -1, $3->NAME, NULL, $3, NULL, NULL);
 		}
 
 		| READ '(' ID '[' expr ']' ')' ';' 	{
+			if(Glookup($3->NAME) == NULL){
+				printf("Unallocated variable '%s'", $3->NAME);
+				exit(0);
+			}
 			if($5->TYPE != INT) {
 				printf("type error: ARRREAD[expr]");
 				exit(0);
@@ -158,6 +170,10 @@ stmt: 	ID ASGN expr ';'	{
 		}
 
 		| ID '[' expr ']' ASGN expr ';'	{
+			if(Glookup($1->NAME) == NULL){
+				printf("Unallocated variable '%s'", $1->NAME);
+				exit(0);
+			}
 			if(!(Glookup($1->NAME)->type == INTARR || $3->TYPE == INT || $6->TYPE == INT) && !(Glookup($1->NAME)->type == BOOLARR || $3->TYPE == INT || $6->TYPE == BOOL)){
 				printf("type error: []=\n");
 				exit(0);

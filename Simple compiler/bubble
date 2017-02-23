@@ -4,7 +4,9 @@ decl
 	integer n;  
 enddecl
 begin
+	write(2);
 	read(n);
+	write(3);
 	i=0;
 	while(i<n) do
 		read(ar[i]);

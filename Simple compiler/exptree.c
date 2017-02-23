@@ -157,7 +157,7 @@ int evaluate(struct tnode *t){
 		    	printf("%d\n",value);
 	    	return 0;
 	    	break;
-	    case SLIST:
+	    case STMT:
 	        tmp = evaluate(t->Ptr1);
 	        if (tmp == BREAK)
 	        	return BREAK;

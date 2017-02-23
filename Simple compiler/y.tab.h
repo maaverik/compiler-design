@@ -66,7 +66,7 @@ extern int yydebug;
     GT = 276,
     EQ = 277,
     NEQ = 278,
-    SLIST = 279,
+    STMT = 279,
     BREAK = 280,
     CONTINUE = 281,
     BEG = 282,
@@ -99,7 +99,7 @@ extern int yydebug;
 #define GT 276
 #define EQ 277
 #define NEQ 278
-#define SLIST 279
+#define STMT 279
 #define BREAK 280
 #define CONTINUE 281
 #define BEG 282
