@@ -1,9 +1,12 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include "exptree.h"
+	#include "sym_table.h"
+
 	#define YYSTYPE struct tnode*
+
 	extern FILE *yyin;
-	#include "exptree.c"
 
 	int yylex();
 	int yyerror(char *);
@@ -11,16 +14,11 @@
 	int var_type;
 %}
 
-//%union{
-//  int integer;
-//  char character;
-//};
 
 %token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ SLIST BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
 %nonassoc GT LT EQ NEQ
 %left PLUS SUB
 %left MUL DIV
-
 
 
 %%
@@ -40,16 +38,16 @@ decl : type varlist ';' {}
 type : INT { var_type = INT;}
 	| BOOL {var_type = BOOL;}
 
-varlist : varlist ',' ID {Ginstall($3->NAME, INT, sizeof(int));}
+varlist : varlist ',' ID {Ginstall($3->NAME, INT, 1);}
 	| varlist ',' ID '[' INT ']' {
 		if ($5->TYPE != INT) {
 			printf("Type error in array declaration.\n");
 			exit(-1);
 		}
 		if (var_type == INT)
-			Ginstall($3->NAME, INTARR, sizeof(int)*$5->VALUE);
+			Ginstall($3->NAME, INTARR, 1*$5->VALUE);
 		else
-			Ginstall($3->NAME, BOOLARR, sizeof(int)*$5->VALUE);
+			Ginstall($3->NAME, BOOLARR, 1*$5->VALUE);
 	}
 	| ID '[' INT ']' {
 		if ($3->TYPE != INT) {
@@ -57,11 +55,11 @@ varlist : varlist ',' ID {Ginstall($3->NAME, INT, sizeof(int));}
 			exit(-1);
 		}
 		if (var_type == INT)
-			Ginstall($1->NAME, INTARR, sizeof(int)*$3->VALUE);
+			Ginstall($1->NAME, INTARR, 1*$3->VALUE);
 		else
-			Ginstall($1->NAME, BOOLARR, sizeof(int)*$3->VALUE);
+			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE);
 	}
-	| ID {Ginstall($1->NAME, var_type, sizeof(int));}
+	| ID {Ginstall($1->NAME, var_type, 1);}
 	;
 
 main : BEG slist END {evaluate($2); exit(1);}

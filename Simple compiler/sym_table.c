@@ -1,10 +1,11 @@
-#include "sym_table.h"
 #include "y.tab.h"
+#include "sym_table.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 extern struct Gsymbol *GST;
+int nextFreeLocation = 0;
 
 struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	struct Gsymbol *tmp = GST;
@@ -42,8 +43,10 @@ void Ginstall(char* name, int type, int size) {
  	i->type = type;
  	i->size = size;
 
- 	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR)		// integer
- 		i->binding = malloc(sizeof(int));
+ 	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
+ 		i->binding = nextFreeLocation;
+ 		nextFreeLocation += size;
+ 	}
  	else
  		printf("Wrong type\n");
 }

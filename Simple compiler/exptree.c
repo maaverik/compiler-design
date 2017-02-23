@@ -1,8 +1,10 @@
 #include "y.tab.h"
+#include "sym_table.h"
 #include "exptree.h"
-#include "sym_table.c"
+#include "codegen.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-//int *var[26];
 
 struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
 	struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
@@ -44,6 +46,10 @@ int toInt(int x){
 	}
 }
 
+int evaluate(struct tnode *t){
+	return codeGen(t);
+}
+/*
 
 int evaluate(struct tnode *t){
 	int value, tmp;
@@ -187,3 +193,5 @@ int evaluate(struct tnode *t){
 	}
 	return -1;
 }
+
+*/
