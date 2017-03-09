@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 extern struct Gsymbol *GST;
-int nextFreeLocation = 0;
+int nextFreeLocation = 4096;
 
 struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	struct Gsymbol *tmp = GST;

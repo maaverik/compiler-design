@@ -63,7 +63,7 @@ varlist : varlist ',' ID {Ginstall($3->NAME, INT, 1);}
 	| ID {Ginstall($1->NAME, var_type, 1);}
 	;
 
-main : BEG slist END {printheader(); evaluate($2); printfooter(); exit(0);}
+main : BEG slist END {codeGenStart($2); exit(0);}
 	;
 
 slist : slist stmt {

@@ -7,7 +7,7 @@
 
 int nextFreeReg = 0;
 int nextLabel = 0;
-FILE *fp = stdout;
+FILE *fp;
 
 int getReg(){
 	if (nextFreeReg >= 20){
@@ -28,6 +28,14 @@ int getLabel(){
 	return nextLabel++;
 }
 
+void codeGenStart(struct tnode *t){
+	fp = fopen("./LabelTranslation/out.xsm", "w");
+	printheader();
+	codeGen(t);
+	printfooter();
+	fclose(fp);
+}
+
 void printheader(){
 	fprintf(fp, "0\n2056\n0\n0\n0\n0\n0\n0\n");	//Only start of stack shown, rest done by simulator
 }
@@ -38,10 +46,14 @@ void printfooter(){
 
 int codeGen(struct tnode* t){
 	int l1, l2, r1, r2, r3;
+	if (t == NULL){
+		printf("NULL\n");
+		return 0;
+	}
 	switch(t->NODETYPE){
 		case INT:
 			r1 = getReg();
-			fprintf(fp, "MOV R%d, %d\n", r1, t->VALUE);
+			fprintf(fp, "MOV R%d,%d\n",r1,t->VALUE );
 			return r1;
 			break;
 		case PLUS:
@@ -101,13 +113,15 @@ int codeGen(struct tnode* t){
 			return r1;
 			break;
 		case ASGN:
-			r1 = codeGen(t->Ptr1);
+			r1 = codeGen(t->Ptr2);
 			fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
-			return -1;
+			freeReg();
+			return 0;
 			break;
 		case STMT:
 			codeGen(t->Ptr1);
-			return codeGen(t->Ptr2);
+			codeGen(t->Ptr2);
+			return 1;
 			break;
 		case WRITE:
 			r2 = codeGen(t->Ptr1);
@@ -124,22 +138,23 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "INT 7\n");
-			fprintf(fp, "POP R%d\n",r2);
+			fprintf(fp, "POP R%d\n",r2); //return value
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
-			freeReg();
-			for(r1=nextFreeReg-1;r1>=0;r1--)	//pop all pushed registers
+			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
 				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
-			return 1;
+			freeReg();
 			break;
 		case READ:
-			r2 = codeGen(t->Ptr2);
-			for(r1=0;r1<nextFreeReg;r1++)	//push all registers in use
-				fprintf(fp, "PUSH R%d\n",r1);
+			r2 = getReg();
+			fprintf(fp, "MOV R%d,0\n",r2);
+			fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
 			r1 = getReg();
+			for(r1=0;r1<nextFreeReg;r1++)		//push all registers in use
+				fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "MOV R%d,\"Read\"\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "MOV R%d,-1\n",r1);
@@ -155,11 +170,10 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
-			freeReg();
-			for(r1=nextFreeReg-1;r1>=0;r1--)	//pop all pushed registers
+			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
 				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
-			return 1;
+			freeReg();
 			break;
 		case ID:
 			r1 = getReg();
@@ -198,7 +212,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "JMP L%d\n",l1);
 			fprintf(fp, "L%d:\n", l2);
 			freeReg();
-			return -1;
+			return 0;
 			break;
 		case ARRVAL:
 			r1 = codeGen(t->Ptr2);

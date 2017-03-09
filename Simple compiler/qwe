@@ -6,19 +6,15 @@ enddecl
 
 begin
 	read(i);
-	x = true;
-	while (x == true) do
+	while (i > 1) do
 		write(i);
 		if (i == 10) then
 			i = i+1;
 			write(111);
-			x = false;
-			continue;
 			write(333);
 		endif;
 		if ( i == 15) then
 			write(222);
-			break;
 			write(444);
 		endif;
 		write(i);

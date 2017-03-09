@@ -1443,7 +1443,7 @@ yyreduce:
 
   case 14:
 #line 66 "expl.y" /* yacc.c:1646  */
-    {printheader(); evaluate((yyvsp[-1])); printfooter(); exit(0);}
+    {codeGenStart((yyvsp[-1])); exit(0);}
 #line 1448 "y.tab.c" /* yacc.c:1646  */
     break;
 
