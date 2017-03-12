@@ -7,7 +7,7 @@
 	char *tmp;
 	struct ltable *laddr = NULL;
 	struct ltable *labtable = NULL;
-	int nextAddr = 2048;
+	int nextAddr = 2048 - 8; //First 8 lines constitute one word each not two
 	#include "lab_trans.h"
 %}
 
