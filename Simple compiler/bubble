@@ -10,8 +10,7 @@ begin
 	write(3);
 	i=0;
 	while(i<n) do
-		read(x);
-		ar[i] = x;
+		read(ar[i]);
 		i=i+1;
 	endwhile;
 	write(111);

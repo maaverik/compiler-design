@@ -235,18 +235,32 @@ int codeGen(struct tnode* t){
 			return r1;
 			break;
 		case ARRREAD:
-			r1 = getReg();
-			fprintf(fp, "MOV R%d, %d\n", r1, (Glookup(t->NAME) -> binding));
 			r2 = codeGen(t->Ptr1);
-			fprintf(fp, "ADD R%d, R%d\n", r1, r2);
-			r3 = getReg();
-			fprintf(fp, "IN R%d\n", r3);
-			fprintf(fp, "MOV [%d], R%d\n", r1, r3);
+			fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
+			r1 = getReg();
+			for(r1=0;r1<nextFreeReg;r1++)		//push all registers in use
+				fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "MOV R%d,\"Read\"\n",r1);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "MOV R%d,-1\n",r1);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "MOV R%d,SP\n",r1);
+			fprintf(fp, "SUB R%d,2\n",r1);
+			fprintf(fp, "PUSH R%d\n",r2);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "INT 6\n");
+			fprintf(fp, "POP R%d\n",r2);
+			fprintf(fp, "POP R%d\n",r1);
+			fprintf(fp, "POP R%d\n",r1);
+			fprintf(fp, "POP R%d\n",r1);
+			fprintf(fp, "POP R%d\n",r1);
+			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
+				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
 			freeReg();
-			freeReg();
-			return -1;
 			break;
+
 		default:
 			printf("Something unexpected happenned: %d\n", t->NODETYPE);
 			exit(-1);
