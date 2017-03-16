@@ -6,13 +6,13 @@
 #include <stdlib.h>
 
 
-struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
+struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct Paramstruct *paramlist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
 	struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
 	temp->TYPE = TYPE;
 	temp->NODETYPE = NODETYPE;
 	temp->VALUE = VALUE;
 	temp->NAME = NAME;
-	temp->ArgList = ArgList;
+	temp->paramlist = paramlist;
 	temp->Ptr1 = Ptr1;
 	temp->Ptr2 = Ptr2;
 	temp->Ptr3 = Ptr3;
@@ -46,10 +46,6 @@ int toInt(int x){
 	}
 }
 
-int evaluate(struct tnode *t){
-	return codeGen(t);
-}
-/*
 
 int evaluate(struct tnode *t){
 	int value, tmp;
@@ -194,4 +190,3 @@ int evaluate(struct tnode *t){
 	return -1;
 }
 
-*/

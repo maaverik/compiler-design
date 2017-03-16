@@ -7,6 +7,7 @@
 
 int nextFreeReg = 0;
 int nextLabel = 0;
+extern int nextFreeLocation;
 FILE *fp;
 
 int getReg(){
@@ -38,6 +39,7 @@ void codeGenStart(struct tnode *t){
 
 void printheader(){
 	fprintf(fp, "0\n2056\n0\n0\n0\n0\n0\n0\n");	//Only start of stack shown, rest done by simulator
+	fprintf(fp, "MOV SP,%d\n",nextFreeLocation);
 }
 
 void printfooter(){

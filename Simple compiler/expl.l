@@ -32,6 +32,8 @@
 "false"	{yylval = TreeCreate(BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "decl" 	{return DECL;}
 "enddecl" {return ENDDECL;}
+"main" {return MAIN;}
+"return" {return RetStmt;}
 
 [=]     { return ASGN;}
 [+]		{return PLUS;}

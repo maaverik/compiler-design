@@ -6,6 +6,7 @@
 
 extern struct Gsymbol *GST;
 int nextFreeLocation = 4096;
+int func_label = 0;
 
 struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	struct Gsymbol *tmp = GST;
@@ -18,7 +19,7 @@ struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	return NULL;
 }
 
-void Ginstall(char* name, int type, int size) {
+void Ginstall(char* name, int type, int size, struct Paramstruct *paramlist) {
  	struct Gsymbol *i;
 
  	if (GST == NULL) {
@@ -42,8 +43,13 @@ void Ginstall(char* name, int type, int size) {
  	i->name = name;
  	i->type = type;
  	i->size = size;
+ 	i->paramlist = paramlist;
+ 	if (paramlist != NULL){
+	 	i->binding = -1;
+	 	i->flabel = func_label++;
+ 	}
 
- 	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
+ 	else if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
  		i->binding = nextFreeLocation;
  		nextFreeLocation += size;
  	}

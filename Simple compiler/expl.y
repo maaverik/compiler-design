@@ -12,7 +12,7 @@
 	int yylex();
 	int yyerror(char *);
 
-	int var_type;
+	int var_type3;
 %}
 
 
@@ -24,46 +24,83 @@
 
 %%
 
-Program : decls main {}
-		| main {}
+Program : GDefblock Fdeflist Mainblock {}
      ;
 
-decls : DECL decllist ENDDECL {}
+GDefblock : DECL decllist ENDDECL {}
 	;
+
 decllist : decl decllist {}
 	| decl {}
 	;
+
 decl : type varlist ';' {}
 	;
 
 type : INT { var_type = INT;}
 	| BOOL {var_type = BOOL;}
 
-varlist : varlist ',' ID {Ginstall($3->NAME, INT, 1);}
-	| varlist ',' ID '[' INT ']' {
-		if ($5->TYPE != INT) {
-			printf("Type error in array declaration.\n");
-			exit(-1);
-		}
-		if (var_type == INT)
-			Ginstall($3->NAME, INTARR, 1*$5->VALUE);
-		else
-			Ginstall($3->NAME, BOOLARR, 1*$5->VALUE);
-	}
-	| ID '[' INT ']' {
+varlist : varlist ',' var {}
+	| var {};
+
+var : ID '[' INT ']' {
 		if ($3->TYPE != INT) {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
 		if (var_type == INT)
-			Ginstall($1->NAME, INTARR, 1*$3->VALUE);
+			Ginstall($1->NAME, INTARR, 1*$3->VALUE, NULL);
 		else
-			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE);
+			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE, NULL);
 	}
-	| ID {Ginstall($1->NAME, var_type, 1);}
+	| ID {Ginstall($1->NAME, var_type, 1, NULL);}
 	;
 
-main : BEG slist END {codeGenStart($2); exit(0);}
+
+
+FdefList : Fdef {}
+	| FdefList Fdef {}
+	;
+
+Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {Ginstall($2->NAME, var_type, -1, $3);}
+	;
+
+arglist : arg ',' arglist {$1->next=$3;}
+	| arg {$$ = $1;}
+	;
+
+arg : type ID {
+		struct Paramstruct *p = malloc(sizeof(paramlist));
+		p->name = $2->name;
+		p->type = var_type;
+		p->next = NULL;
+		$$ = p;
+	}
+	;
+
+LDefBlock : DECL LDefList ENDDECL 	{}
+	| DECL ENDDECL				{}
+	;
+
+LDefList :  LDefList LDecl
+	| LDecl
+	;
+
+LDecl : Type LIdList ';'
+	;
+
+LIdList : LIdList ',' LId
+	| LId
+	;
+
+LId : ID { Linstall($1->NAME,variable_type,1); 			}
+	| ID '[' INT ']' { Linstall($1->NAME,variable_type,$3->VALUE);	}
+	;
+
+Mainblock : INT MAIN '(' ')' '{' LDefblock Body '}' {}
+	;
+
+Body : BEG slist RetStmt END {codeGenStart($2); exit(0);}
 	;
 
 slist : slist stmt {
@@ -81,6 +118,7 @@ slist : slist stmt {
      	$$ = $1;
     }
     ;
+
 stmt: 	ID ASGN expr ';' {
 			if(Glookup($1->NAME) == NULL){
 				printf("Unallocated variable '%s'", $1->NAME);

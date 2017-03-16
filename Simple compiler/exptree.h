@@ -23,12 +23,12 @@ struct tnode {
 
 	struct Gsymbol *Gentry; // For global identifiers/functions
 
-	//Lsymbol *Lentry; // For Local variables
+	struct Lsymbol *Lentry; // For Local variables
 
 };
 
 
-struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *ArgList, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3);
+struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct Paramstruct *paramlist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3);
 
 /*Make a leaf tnode and set the value of val field*/
 //struct tnode* makeLeafNode(int n);
