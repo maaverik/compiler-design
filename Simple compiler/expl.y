@@ -11,10 +11,9 @@
 
 	int yylex();
 	int yyerror(char *);
-
-	int var_type3;
+	struct Lsymbol *LST = NULL;
+	int var_type;
 %}
-
 
 %token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
 %nonassoc GT LT EQ NEQ
@@ -44,6 +43,10 @@ varlist : varlist ',' var {}
 	| var {};
 
 var : ID '[' INT ']' {
+		if (Glookup($1->NAME) != NULL){
+			printf("Already declared\n");
+			exit(-1);
+		}
 		if ($3->TYPE != INT) {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
@@ -53,16 +56,53 @@ var : ID '[' INT ']' {
 		else
 			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE, NULL);
 	}
-	| ID {Ginstall($1->NAME, var_type, 1, NULL);}
+	| ID {
+		if (Glookup($1->NAME) != NULL){
+			printf("Already declared\n");
+			exit(-1);
+		}
+		Ginstall($1->NAME, var_type, 1, NULL);
+	}
+	| ID '(' arglist ')' ';' {
+		if (Glookup($1->NAME) != NULL){
+			printf("Already declared\n");
+			exit(-1);
+		}
+		Ginstall($1->NAME, var_type, -1, $3);
+	}
 	;
-
-
 
 FdefList : Fdef {}
 	| FdefList Fdef {}
 	;
 
-Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {Ginstall($2->NAME, var_type, -1, $3);}
+Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {
+		//Ginstall($2->NAME, var_type, -1, $3);
+		struct Paramstruct *p = Glookup($2->NAME)->paramlist;
+		struct tnode *t = $4;
+		while (t != NULL && p != NULL){
+			if (t->type != p->type){
+				printf("Argument types don't match\n");
+				exit(0);
+			}
+			t = t->Ptr1;
+			p = p->next;
+		}
+		if (t != NULL || p != NULL){
+			printf("Incorrect number of arguments\n");
+			exit(0);
+		}
+		int argBinding = -3;
+		p = Glookup($2->NAME)->paramlist;
+		while(p != NULL){		// Adding parameters to local symbol table
+			Linstall(p->name, p->size, 1);
+			Llookup(p->name)->binding = argBinding;
+			argBinding--;
+		}
+		Glookup($2->NAME)->local = LST;
+		codeGenStart($8, $2->NAME);
+		LST = NULL;
+	}
 	;
 
 arglist : arg ',' arglist {$1->next=$3;}
@@ -82,25 +122,28 @@ LDefBlock : DECL LDefList ENDDECL 	{}
 	| DECL ENDDECL				{}
 	;
 
-LDefList :  LDefList LDecl
-	| LDecl
+LDefList :  LDefList LDecl {}
+	| LDecl {}
 	;
 
-LDecl : Type LIdList ';'
+LDecl : type LIdList ';' {}
 	;
 
-LIdList : LIdList ',' LId
-	| LId
+LIdList : LIdList ',' LId {}
+	| LId {}
 	;
 
-LId : ID { Linstall($1->NAME,variable_type,1); 			}
-	| ID '[' INT ']' { Linstall($1->NAME,variable_type,$3->VALUE);	}
+LId : ID { Linstall($1->NAME,var_type,1); }
 	;
 
-Mainblock : INT MAIN '(' ')' '{' LDefblock Body '}' {}
+Mainblock : INT MAIN '(' ')' '{' LDefblock Body '}' {
+		Ginstall("MAIN", INT, -1, NULL);
+		codeGenStart($7, "MAIN");
+		exit(0);
+	}
 	;
 
-Body : BEG slist RetStmt END {codeGenStart($2); exit(0);}
+Body : BEG slist RetStmt END {$$ = $2;}
 	;
 
 slist : slist stmt {
@@ -122,6 +165,10 @@ slist : slist stmt {
 stmt: 	ID ASGN expr ';' {
 			if(Glookup($1->NAME) == NULL){
 				printf("Unallocated variable '%s'", $1->NAME);
+				exit(0);
+			}
+			if(Glookup($1->NAME)->paramlist != NULL){
+				printf("Cannot assign to function '%s'", $1->NAME);
 				exit(0);
 			}
 			if(Glookup($1->NAME)->type != $3->TYPE){
@@ -218,7 +265,33 @@ stmt: 	ID ASGN expr ';' {
 	 		}
 			$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
  		}
+ 		| ID '(' Args ')' ';' {
+ 			if (ID->paramlist == NULL){
+ 				printf("Not a function\n");
+ 				exit(0);
+ 			}
+ 			struct Paramstruct *p = $1->paramlist;
+ 			struct tnode *t = $3;
+ 			while (t != NULL && p != NULL){
+ 				if (t->type != p->type){
+ 					printf("Argument types don't match\n");
+ 					exit(0);
+ 				}
+ 				t = t->ArgList;
+ 				p = p->next;
+ 			}
+ 			if (t != NULL || p != NULL){
+ 				printf("Incorrect number of arguments\n");
+ 				exit(0);
+ 			}
+ 			$$ = TreeCreate(-1, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
+ 		}
 		;
+
+Args: Args ',' expr {$1->ArgList = $3;}
+	| expr { $$ = S1;}
+	| %empty {$$ + NULL;}
+	;
 
 expr: expr PLUS expr {
 		if($1->TYPE != INT || $3->TYPE != INT){
@@ -322,6 +395,9 @@ expr: expr PLUS expr {
 		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
 	 }
 	 ;
+
+RetStmt : RETURN expr { $$ = TreeCreate(-1, RETURN, -1, NULL, NULL, $2, NULL, NULL); }
+	;
 
 %%
 

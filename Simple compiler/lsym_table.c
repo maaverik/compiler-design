@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 extern struct Lsymbol *LST;
-int nextFreeLocation = 0;
+int nextLocation = 1;
 
 struct Lsymbol* LInstall(char *name, int type, int size){
 	struct Lsymbol *i;
@@ -33,8 +33,8 @@ struct Lsymbol* LInstall(char *name, int type, int size){
  	i->size = size;
 
  	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
- 		i->binding = nextFreeLocation;
- 		nextFreeLocation += size;
+ 		i->binding = nextLocation;
+ 		nextLocation += size;
  	}
  	else
  		printf("Wrong type\n");

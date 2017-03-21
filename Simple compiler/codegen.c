@@ -7,7 +7,9 @@
 
 int nextFreeReg = 0;
 int nextLabel = 0;
+int func_label = 0;
 extern int nextFreeLocation;
+int first_call = 1;
 FILE *fp;
 
 int getReg(){
@@ -29,22 +31,67 @@ int getLabel(){
 	return nextLabel++;
 }
 
-void codeGenStart(struct tnode *t){
-	fp = fopen("./LabelTranslation/out.xsm", "w");
-	printheader();
-	codeGen(t);
-	printfooter();
-	fclose(fp);
+void codeGenStart(struct tnode *t, char caller[]){
+	if (first_call){
+		fp = fopen("./LabelTranslation/out.xsm", "w");
+		printheader();
+		fprintf(fp, "MOV SP,%d\n",nextFreeLocation);
+		funcDecl(caller);
+		codeGen(t);
+		//funcRet(caller);
+		first_call = 0;
+	}
+	else{
+		funcDecl(caller);
+		codeGen(t);
+		//funcRet(caller);
+	}
+	if (strcmp("MAIN", caller)){
+		// return of main should write INT 10 instead of RET
+		fclose(fp);
+	}
 }
 
 void printheader(){
 	fprintf(fp, "0\n2056\n0\n0\n0\n0\n0\n0\n");	//Only start of stack shown, rest done by simulator
-	fprintf(fp, "MOV SP,%d\n",nextFreeLocation);
 }
 
-void printfooter(){
-	fprintf(fp, "INT 10\n");
+void funcDecl(char caller[]){
+	if (strcmp("MAIN", caller)){
+		fprintf(fp, "MAIN:\n");
+		Glookup("MAIN")->flabel = -1;
+	}
+	else{
+		fprintf(fp, "F%d:\n", func_label);
+		Glookup(caller)->flabel = func_label;
+		func_label++;
+	}
+	fprintf(fp, "PUSH BP\n");
+	fprintf(fp, "MOV BP,SP\n");
+	struct Lsymbol *l = Glookup(caller)->local;
+	int r1 = getReg();
+	int size = 0;
+	while (l != NULL){
+		size++;
+		l = l->next;
+	}
+	fprintf(fp, "ADD SP, %d\n", size); // pushing empty space for local variables
+	freeReg();
 }
+
+void funcRet(caller){
+	struct Lsymbol *l = Glookup(caller)->local;
+	int r1 = getReg();
+	int size = 0;
+	while (l != NULL){
+		size++;
+		l = l->next;
+	}
+	fprintf(fp, "SUB SP, %d\n", size);
+	freeReg();
+	fprintf(fp, "POP BP\n");
+}
+
 
 int codeGen(struct tnode* t){
 	int l1, l2, r1, r2, r3;
@@ -116,7 +163,15 @@ int codeGen(struct tnode* t){
 			break;
 		case ASGN:
 			r1 = codeGen(t->Ptr2);
-			fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
+			if (LLookup(t->NAME) != NULL){
+				r2 = getReg();
+				fprintf(fp, "MOV R%d, BP\n", r2);
+				fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->NAME)->binding);
+				fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+			}
+			else{
+				fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
+			}
 			freeReg();
 			return 0;
 			break;
@@ -139,7 +194,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "INT 7\n");
+			fprintf(fp, "CALL 0\n");
 			fprintf(fp, "POP R%d\n",r2); //return value
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -153,7 +208,16 @@ int codeGen(struct tnode* t){
 		case READ:
 			r2 = getReg();
 			fprintf(fp, "MOV R%d,0\n",r2);
-			fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
+			if (LLookup(t->NAME) != NULL){
+				r1 = getReg();
+				fprintf(fp, "MOV R%d, BP\n",r1);
+				fprintf(fp, "ADD R%d, %d\n", r1, LLookup(t->NAME)->binding);
+				fprintf(fp, "ADD R%d,R%d\n", r2, r1);
+				freeReg();
+			}
+			else{
+				fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
+			}
 			r1 = getReg();
 			for(r1=0;r1<nextFreeReg;r1++)		//push all registers in use
 				fprintf(fp, "PUSH R%d\n",r1);
@@ -161,12 +225,10 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "MOV R%d,-1\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "MOV R%d,SP\n",r1);
-			fprintf(fp, "SUB R%d,2\n",r1);
 			fprintf(fp, "PUSH R%d\n",r2);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "INT 6\n");
+			fprintf(fp, "CALL 0\n");
 			fprintf(fp, "POP R%d\n",r2);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -178,9 +240,20 @@ int codeGen(struct tnode* t){
 			freeReg();
 			break;
 		case ID:
-			r1 = getReg();
-			fprintf(fp, "MOV R%d, [%d]\n", r1, Glookup(t->NAME)->binding);
-			return r1;
+			if (LLookup(t->Ptr1->NAME) != NULL){
+				r1 = getReg();
+				r2 = getReg();
+				fprintf(fp, "MOV R%d, BP\n",r2);
+				fprintf(fp, "ADD R%d, %d\n",r2,  Llookup(t->NAME)->binding);
+				fprintf(fp, "MOV R%d, [R%d]\n", r1, r2);
+				freeReg();
+				return r1;
+			}
+			else {
+				r1 = getReg();
+				fprintf(fp, "MOV R%d, [%d]\n", r1, Glookup(t->NAME)->binding);
+				return r1;
+			}
 			break;
 		case IF:
 			if(t->Ptr3 != NULL){
@@ -246,12 +319,10 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "MOV R%d,-1\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "MOV R%d,SP\n",r1);
-			fprintf(fp, "SUB R%d,2\n",r1);
 			fprintf(fp, "PUSH R%d\n",r2);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "INT 6\n");
+			fprintf(fp, "CALL 0\n");
 			fprintf(fp, "POP R%d\n",r2);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -261,6 +332,12 @@ int codeGen(struct tnode* t){
 				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
 			freeReg();
+			break;
+		case FUNCCALL:
+
+			break;
+		case RETURN:
+
 			break;
 
 		default:

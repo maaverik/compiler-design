@@ -33,7 +33,7 @@
 "decl" 	{return DECL;}
 "enddecl" {return ENDDECL;}
 "main" {return MAIN;}
-"return" {return RetStmt;}
+"return" {return RETURN;}
 
 [=]     { return ASGN;}
 [+]		{return PLUS;}

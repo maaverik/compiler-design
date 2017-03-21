@@ -28,7 +28,7 @@ struct tnode {
 };
 
 
-struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct Paramstruct *paramlist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3);
+struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *Arglist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3);
 
 /*Make a leaf tnode and set the value of val field*/
 //struct tnode* makeLeafNode(int n);
