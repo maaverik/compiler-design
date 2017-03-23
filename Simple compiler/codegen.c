@@ -36,6 +36,8 @@ void codeGenStart(struct tnode *t, char caller[]){
 		fp = fopen("./LabelTranslation/out.xsm", "w");
 		printheader();
 		fprintf(fp, "MOV SP,%d\n",nextFreeLocation);
+		fprintf(fp, "MOV BP,%d\n",nextFreeLocation);
+		fprintf(fp, "JMP MAIN\n");
 		funcDecl(caller);
 		codeGen(t);
 		//funcRet(caller);
@@ -69,14 +71,15 @@ void funcDecl(char caller[]){
 	fprintf(fp, "PUSH BP\n");
 	fprintf(fp, "MOV BP,SP\n");
 	struct Lsymbol *l = Glookup(caller)->local;
-	int r1 = getReg();
 	int size = 0;
 	while (l != NULL){
+		if (l->binding < 0){
+			break;
+		}
 		size++;
 		l = l->next;
 	}
 	fprintf(fp, "ADD SP, %d\n", size); // pushing empty space for local variables
-	freeReg();
 }
 
 void funcRet(caller){
@@ -84,12 +87,16 @@ void funcRet(caller){
 	int r1 = getReg();
 	int size = 0;
 	while (l != NULL){
+		if (l->binding < 0){
+			break;
+		}
 		size++;
 		l = l->next;
 	}
-	fprintf(fp, "SUB SP, %d\n", size);
+	fprintf(fp, "SUB SP, %d\n", size); //pop space for local variables
 	freeReg();
 	fprintf(fp, "POP BP\n");
+	fprintf(fp, "RET\n");
 }
 
 
@@ -334,10 +341,33 @@ int codeGen(struct tnode* t){
 			freeReg();
 			break;
 		case FUNCCALL:
-
+			r1 = getReg();
+			for(r1=0; r1<nextFreeReg; r1++){
+				fprintf(fp, "PUSH R%d\n", r1);
+			}
+			struct tnode *tmp = t->ArgList;
+			r3 = 0;
+			while(t != NULL){	//push arguments
+				r1 = codeGen(t);
+				fprintf(fp, "PUSH R%d\n", r1);
+				t = t->ArgList;
+				r3++;
+				freeReg();
+			}
+			fprintf(fp, "PUSH R%d\n", r1);	// return value
+			fprintf(fp, "CALL F%d\n", Glookup(t->NAME)->flabel);
+			fprintf(fp, "SUB SP, %d\n", r3);	//pop space for arguments
+			for(r1=0; r1<nextFreeReg; r1++){
+				fprintf(fp, "POP R%d\n", r1);
+			}
 			break;
 		case RETURN:
-
+			r1 = codeGen(t->Ptr1);
+			r2 = getReg();
+			fprintf(fp, "MOV R%d, BP\n", r2);
+			fprintf(fp, "SUB R%d, 2\n", r2);
+			fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+			funcRet();
 			break;
 
 		default:

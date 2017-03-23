@@ -74,7 +74,9 @@ extern int yydebug;
     DECL = 284,
     ENDDECL = 285,
     INT = 286,
-    BOOL = 287
+    BOOL = 287,
+    MAIN = 288,
+    RETURN = 289
   };
 #endif
 /* Tokens.  */
@@ -108,6 +110,8 @@ extern int yydebug;
 #define ENDDECL 285
 #define INT 286
 #define BOOL 287
+#define MAIN 288
+#define RETURN 289
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

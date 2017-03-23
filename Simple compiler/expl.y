@@ -4,6 +4,7 @@
 	#include "exptree.h"
 	#include "sym_table.h"
 	#include "codegen.h"
+	#include "lsym_table.h"
 
 	#define YYSTYPE struct tnode*
 
@@ -15,7 +16,7 @@
 	int var_type;
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RETURN
 %nonassoc GT LT EQ NEQ
 %left PLUS SUB
 %left MUL DIV
@@ -23,7 +24,7 @@
 
 %%
 
-Program : GDefblock Fdeflist Mainblock {}
+Program : GDefblock FdefList Mainblock {}
      ;
 
 GDefblock : DECL decllist ENDDECL {}
@@ -68,7 +69,7 @@ var : ID '[' INT ']' {
 			printf("Already declared\n");
 			exit(-1);
 		}
-		Ginstall($1->NAME, var_type, -1, $3);
+		Ginstall($1->NAME, var_type, -1, (struct Paramstruct*)$3);
 	}
 	;
 
@@ -76,12 +77,12 @@ FdefList : Fdef {}
 	| FdefList Fdef {}
 	;
 
-Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {
+Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		//Ginstall($2->NAME, var_type, -1, $3);
 		struct Paramstruct *p = Glookup($2->NAME)->paramlist;
 		struct tnode *t = $4;
 		while (t != NULL && p != NULL){
-			if (t->type != p->type){
+			if (t->TYPE != p->type){
 				printf("Argument types don't match\n");
 				exit(0);
 			}
@@ -95,8 +96,8 @@ Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {
 		int argBinding = -3;
 		p = Glookup($2->NAME)->paramlist;
 		while(p != NULL){		// Adding parameters to local symbol table
-			Linstall(p->name, p->size, 1);
-			Llookup(p->name)->binding = argBinding;
+			Linstall(p->name, p->type, 1);
+			LLookup(p->name)->binding = argBinding;
 			argBinding--;
 		}
 		Glookup($2->NAME)->local = LST;
@@ -105,16 +106,17 @@ Fdef : type ID '(' arglist ')' '{' LDefblock Body '}' {
 	}
 	;
 
-arglist : arg ',' arglist {$1->next=$3;}
+arglist : arglist ',' arg {((struct Paramstruct*)$1)->next=((struct Paramstruct*)$3);}
 	| arg {$$ = $1;}
+	| %empty {$$ = NULL;}
 	;
 
 arg : type ID {
-		struct Paramstruct *p = malloc(sizeof(paramlist));
-		p->name = $2->name;
+		struct Paramstruct *p = malloc(sizeof(struct Paramstruct));
+		p->name = $2->NAME;
 		p->type = var_type;
 		p->next = NULL;
-		$$ = p;
+		$$ = (struct tnode*)p;
 	}
 	;
 
@@ -136,14 +138,16 @@ LIdList : LIdList ',' LId {}
 LId : ID { Linstall($1->NAME,var_type,1); }
 	;
 
-Mainblock : INT MAIN '(' ')' '{' LDefblock Body '}' {
+Mainblock : INT MAIN '(' ')' '{' LDefBlock Body '}' {
 		Ginstall("MAIN", INT, -1, NULL);
 		codeGenStart($7, "MAIN");
 		exit(0);
 	}
 	;
 
-Body : BEG slist RetStmt END {$$ = $2;}
+Body : BEG slist RetStmt END {
+		$$ = TreeCreate(-1, STMT, -1, NULL, NULL, $2, $3, NULL);
+	}
 	;
 
 slist : slist stmt {
@@ -288,9 +292,9 @@ stmt: 	ID ASGN expr ';' {
  		}
 		;
 
-Args: Args ',' expr {$1->ArgList = $3;}
+Args: expr ',' Args {$1->ArgList = $3;}
 	| expr { $$ = S1;}
-	| %empty {$$ + NULL;}
+	| %empty {$$ = NULL;}
 	;
 
 expr: expr PLUS expr {

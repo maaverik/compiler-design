@@ -5,6 +5,6 @@ struct Lsymbol{
 	struct Lsymbol *next;     //points to the next Local Symbol Table entry
 };
 
-struct Lsymbol* LInstall(char* name, int type, int size);
+struct Lsymbol* Linstall(char* name, int type, int size);
 
 struct Lsymbol* LLookup(char *name);
