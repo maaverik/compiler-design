@@ -1,12 +1,12 @@
 #include "y.tab.h"
 #include "sym_table.h"
+#include "lsym_table.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 extern struct Gsymbol *GST;
 int nextFreeLocation = 4096;
-int func_label = 0;
 
 struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	struct Gsymbol *tmp = GST;
@@ -30,7 +30,7 @@ void Ginstall(char* name, int type, int size, struct Paramstruct *paramlist) {
  		i = GST;
  		while(i->next != NULL){
  			if (name == i -> name){
-	 			printf("Variable %s already declared once\n", name);
+	 			printf("Variable %s already declared once globally\n", name);
 	 			exit(-1);
 	 		}
  			i = i->next;
@@ -46,7 +46,7 @@ void Ginstall(char* name, int type, int size, struct Paramstruct *paramlist) {
  	i->paramlist = paramlist;
  	if (paramlist != NULL){
 	 	i->binding = -1;
-	 	i->flabel = func_label++;
+	 	i->flabel = -1;
  	}
 
  	else if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer

@@ -1,6 +1,6 @@
 struct Lsymbol{
 	char *name;               //name of the variable
-	struct Typetable *type;   //pointer to the Typetable entry of variable type
+	int type;   //pointer to the Typetable entry of variable type
 	int binding;              //stores memory address allocated to the variable
 	struct Lsymbol *next;     //points to the next Local Symbol Table entry
 };

@@ -46,6 +46,7 @@ int toInt(int x){
 	}
 }
 
+/*
 
 int evaluate(struct tnode *t){
 	int value, tmp;
@@ -190,3 +191,4 @@ int evaluate(struct tnode *t){
 	return -1;
 }
 
+*/

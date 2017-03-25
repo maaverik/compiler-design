@@ -1,8 +1,8 @@
 decl
-	integer n, ar[100], i, j, x, temp;
-        boolean b;
-	integer n;  
+	int n, ar[100], i, j, x, temp;
+    bool b;
 enddecl
+int main() {
 begin
 	write(1);
 	write(2);
@@ -35,4 +35,6 @@ begin
 		write(ar[i]);
 		i=i+1;
 	endwhile;
+	return 0;
 end
+}

@@ -16,7 +16,7 @@
 	int var_type;
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RETURN
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET
 %nonassoc GT LT EQ NEQ
 %left PLUS SUB
 %left MUL DIV
@@ -64,12 +64,20 @@ var : ID '[' INT ']' {
 		}
 		Ginstall($1->NAME, var_type, 1, NULL);
 	}
-	| ID '(' arglist ')' ';' {
+	| ID '(' arglist ')' {
 		if (Glookup($1->NAME) != NULL){
 			printf("Already declared\n");
 			exit(-1);
 		}
 		Ginstall($1->NAME, var_type, -1, (struct Paramstruct*)$3);
+		int argBinding = -3;
+		struct Paramstruct *p = (struct Paramstruct*)$3;
+		while(p != NULL){		// Adding parameters to local symbol table
+			Linstall(p->name, p->type, 1);
+			LLookup(p->name)->binding = argBinding;
+			argBinding--;
+			p = p->next;
+		}
 	}
 	;
 
@@ -83,7 +91,7 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		struct tnode *t = $4;
 		while (t != NULL && p != NULL){
 			if (t->TYPE != p->type){
-				printf("Argument types don't match\n");
+				printf("Argument types don't match 1\n");
 				exit(0);
 			}
 			t = t->Ptr1;
@@ -93,13 +101,17 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 			printf("Incorrect number of arguments\n");
 			exit(0);
 		}
-		int argBinding = -3;
-		p = Glookup($2->NAME)->paramlist;
-		while(p != NULL){		// Adding parameters to local symbol table
-			Linstall(p->name, p->type, 1);
-			LLookup(p->name)->binding = argBinding;
-			argBinding--;
+
+		struct Lsymbol *l = LST;
+		int size = 0;
+		while (l != NULL){
+			if (l->binding < 0){
+				break;
+			}
+			size++;
+			l = l->next;
 		}
+		Glookup($2->NAME)->size = size;
 		Glookup($2->NAME)->local = LST;
 		codeGenStart($8, $2->NAME);
 		LST = NULL;
@@ -167,15 +179,15 @@ slist : slist stmt {
     ;
 
 stmt: 	ID ASGN expr ';' {
-			if(Glookup($1->NAME) == NULL){
-				printf("Unallocated variable '%s'", $1->NAME);
+			if(Glookup($1->NAME) == NULL && LLookup($1->NAME) == NULL){
+				printf("Unallocated variable '%s'\n", $1->NAME);
 				exit(0);
 			}
-			if(Glookup($1->NAME)->paramlist != NULL){
-				printf("Cannot assign to function '%s'", $1->NAME);
+			if(LLookup($1->NAME) == NULL && Glookup($1->NAME)->paramlist != NULL){
+				printf("Cannot assign to function '%s'\n", $1->NAME);
 				exit(0);
 			}
-			if(Glookup($1->NAME)->type != $3->TYPE){
+			if(LLookup($1->NAME) == NULL && Glookup($1->NAME)->type != $3->TYPE){
 				printf("type error: =\n");
 				exit(0);
 			}
@@ -270,30 +282,30 @@ stmt: 	ID ASGN expr ';' {
 			$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
  		}
  		| ID '(' Args ')' ';' {
- 			if (ID->paramlist == NULL){
+ 			if (Glookup($1->NAME)->paramlist == NULL){
  				printf("Not a function\n");
  				exit(0);
  			}
- 			struct Paramstruct *p = $1->paramlist;
+ 			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
  			struct tnode *t = $3;
  			while (t != NULL && p != NULL){
- 				if (t->type != p->type){
- 					printf("Argument types don't match\n");
+ 				if (t->TYPE != p->type){
+ 					printf("Argument types don't match 2\n");
  					exit(0);
  				}
- 				t = t->ArgList;
+ 				t = t->Arglist;
  				p = p->next;
  			}
  			if (t != NULL || p != NULL){
  				printf("Incorrect number of arguments\n");
  				exit(0);
  			}
- 			$$ = TreeCreate(-1, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
+ 			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
 		;
 
-Args: expr ',' Args {$1->ArgList = $3;}
-	| expr { $$ = S1;}
+Args: expr ',' Args {$$ = $1; $1->Arglist = $3;}
+	| expr { $$ = $1;}
 	| %empty {$$ = NULL;}
 	;
 
@@ -320,6 +332,13 @@ expr: expr PLUS expr {
 		}
 		$$ = makeOperatorNode(SUB, INT, $1, $3);
 	}
+	 | SUB expr {
+	 	if($2->TYPE != INT){
+			printf("type error: unary -\n");
+			exit(0);
+		}
+		$$ = makeOperatorNode(SUB, INT, 0, $2);
+	}
 
 	 | expr DIV expr {
 	 	if($1->TYPE != INT || $3->TYPE != INT){
@@ -336,11 +355,14 @@ expr: expr PLUS expr {
 	 | BOOL {$$ = $1;}
 
 	 | ID {
-	 	if (Glookup($1->NAME) == NULL){
+	  	if (LLookup($1->NAME) != NULL)
+	 		$1->TYPE = LLookup($1->NAME)->type;
+	 	else if (Glookup($1->NAME) != NULL)
+	 		$1->TYPE = Glookup($1->NAME)->type;
+	 	else{
 	 		printf("Undeclared variable %s\n", $1->NAME);
 	 		exit(-1);
 	 	}
-	 	$1->TYPE = Glookup($1->NAME)->type;
 	 	$$ = $1;
 	 }
 
@@ -349,21 +371,26 @@ expr: expr PLUS expr {
 	 		printf("type error: []\n");
 			exit(0);
 	 	}
-	 	if (Glookup($1->NAME) == NULL){
-	 		printf("Undeclared variable %s\n", $1->NAME);
+	 	if (LLookup($1->NAME) != NULL){
+	 		if(LLookup($1->NAME)->type == INTARR){
+		 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+		 	}
+		 	else if(LLookup($1->NAME)->type == BOOLARR){
+		 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
+	 		}
+	 	}
+	 	else if (Glookup($1->NAME) != NULL){
+	 		if(Glookup($1->NAME)->type == INTARR){
+		 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+		 	}
+		 	else if(Glookup($1->NAME)->type == BOOLARR){
+		 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
+	 		}
+	 	}
+	 	else{
+	 		printf("Undeclared array %s\n", $1->NAME);
 	 		exit(-1);
 	 	}
-	 	if(Glookup($1->NAME)->type == INTARR){
-	 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
-	 	}
-	 	else if(Glookup($1->NAME)->type == BOOLARR){
-	 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
-	 	}
-	 	else {
-	 		printf("Type error array lookup");
-	 		exit(-1);
-	 	}
-
 	 }
 
 	 | expr LT expr {
@@ -389,7 +416,6 @@ expr: expr PLUS expr {
 		}
 		 $$ = makeOperatorNode(EQ, BOOL, $1, $3);
 	 }
-	 ;
 
 	 | expr NEQ expr {
 	 	if($1->TYPE != INT || $3->TYPE != INT){
@@ -398,9 +424,30 @@ expr: expr PLUS expr {
 		}
 		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
 	 }
-	 ;
+	 | ID '(' Args ')' {
+ 			if (Glookup($1->NAME)->paramlist == NULL){
+ 				printf("Not a function\n");
+ 				exit(0);
+ 			}
+ 			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
+ 			struct tnode *t = $3;
+ 			while (t != NULL && p != NULL){
+ 				if (t->TYPE != p->type){
+ 					printf("Argument types don't match 3\n");
+ 					exit(0);
+ 				}
+ 				t = t->Arglist;
+ 				p = p->next;
+ 			}
+ 			if (t != NULL || p != NULL){
+ 				printf("Incorrect number of arguments\n");
+ 				exit(0);
+ 			}
+ 			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
+ 		}
+		;
 
-RetStmt : RETURN expr { $$ = TreeCreate(-1, RETURN, -1, NULL, NULL, $2, NULL, NULL); }
+RetStmt : RET expr ';'{ $$ = TreeCreate($2->TYPE, RET, -1, NULL, NULL, $2, NULL, NULL); }
 	;
 
 %%

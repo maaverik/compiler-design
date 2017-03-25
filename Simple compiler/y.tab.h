@@ -76,7 +76,7 @@ extern int yydebug;
     INT = 286,
     BOOL = 287,
     MAIN = 288,
-    RETURN = 289
+    RET = 289
   };
 #endif
 /* Tokens.  */
@@ -111,7 +111,7 @@ extern int yydebug;
 #define INT 286
 #define BOOL 287
 #define MAIN 288
-#define RETURN 289
+#define RET 289
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -15,7 +15,7 @@ struct tnode {
 
 	int VALUE; // for constants
 
-	struct tnode *ArgList; // List of arguments for functions
+	struct tnode *Arglist; // List of arguments for functions
 
 	struct tnode *Ptr1, *Ptr2, *Ptr3;
 

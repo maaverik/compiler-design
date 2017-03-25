@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "y.tab.h"
 #include "sym_table.h"
+#include "lsym_table.h"
 #include "exptree.h"
 #include "codegen.h"
 
+char func_name[50];
 int nextFreeReg = 0;
 int nextLabel = 0;
 int func_label = 0;
@@ -31,24 +34,23 @@ int getLabel(){
 	return nextLabel++;
 }
 
-void codeGenStart(struct tnode *t, char caller[]){
+void codeGenStart(struct tnode *t, char func[]){
 	if (first_call){
 		fp = fopen("./LabelTranslation/out.xsm", "w");
 		printheader();
 		fprintf(fp, "MOV SP,%d\n",nextFreeLocation);
 		fprintf(fp, "MOV BP,%d\n",nextFreeLocation);
 		fprintf(fp, "JMP MAIN\n");
-		funcDecl(caller);
+		strcpy(func_name, func);
+		funcDecl();
 		codeGen(t);
-		//funcRet(caller);
 		first_call = 0;
 	}
 	else{
-		funcDecl(caller);
+		funcDecl();
 		codeGen(t);
-		//funcRet(caller);
 	}
-	if (strcmp("MAIN", caller)){
+	if (strcmp("MAIN", func_name)){
 		// return of main should write INT 10 instead of RET
 		fclose(fp);
 	}
@@ -58,42 +60,23 @@ void printheader(){
 	fprintf(fp, "0\n2056\n0\n0\n0\n0\n0\n0\n");	//Only start of stack shown, rest done by simulator
 }
 
-void funcDecl(char caller[]){
-	if (strcmp("MAIN", caller)){
+void funcDecl(){
+	if (strcmp("MAIN", func_name)){
 		fprintf(fp, "MAIN:\n");
 		Glookup("MAIN")->flabel = -1;
 	}
 	else{
 		fprintf(fp, "F%d:\n", func_label);
-		Glookup(caller)->flabel = func_label;
+		Glookup(func_name)->flabel = func_label;
 		func_label++;
 	}
 	fprintf(fp, "PUSH BP\n");
 	fprintf(fp, "MOV BP,SP\n");
-	struct Lsymbol *l = Glookup(caller)->local;
-	int size = 0;
-	while (l != NULL){
-		if (l->binding < 0){
-			break;
-		}
-		size++;
-		l = l->next;
-	}
-	fprintf(fp, "ADD SP, %d\n", size); // pushing empty space for local variables
+	fprintf(fp, "ADD SP, %d\n", Glookup(func_name)->size); // pushing empty space for local variables
 }
 
-void funcRet(caller){
-	struct Lsymbol *l = Glookup(caller)->local;
-	int r1 = getReg();
-	int size = 0;
-	while (l != NULL){
-		if (l->binding < 0){
-			break;
-		}
-		size++;
-		l = l->next;
-	}
-	fprintf(fp, "SUB SP, %d\n", size); //pop space for local variables
+void funcRet(){
+	fprintf(fp, "SUB SP, %d\n", Glookup(func_name)->size); //pop space for local variables
 	freeReg();
 	fprintf(fp, "POP BP\n");
 	fprintf(fp, "RET\n");
@@ -251,7 +234,7 @@ int codeGen(struct tnode* t){
 				r1 = getReg();
 				r2 = getReg();
 				fprintf(fp, "MOV R%d, BP\n",r2);
-				fprintf(fp, "ADD R%d, %d\n",r2,  Llookup(t->NAME)->binding);
+				fprintf(fp, "ADD R%d, %d\n",r2,  LLookup(t->NAME)->binding);
 				fprintf(fp, "MOV R%d, [R%d]\n", r1, r2);
 				freeReg();
 				return r1;
@@ -345,12 +328,12 @@ int codeGen(struct tnode* t){
 			for(r1=0; r1<nextFreeReg; r1++){
 				fprintf(fp, "PUSH R%d\n", r1);
 			}
-			struct tnode *tmp = t->ArgList;
+			struct tnode *tmp = t->Arglist;
 			r3 = 0;
 			while(t != NULL){	//push arguments
 				r1 = codeGen(t);
 				fprintf(fp, "PUSH R%d\n", r1);
-				t = t->ArgList;
+				t = t->Arglist;
 				r3++;
 				freeReg();
 			}
@@ -361,7 +344,7 @@ int codeGen(struct tnode* t){
 				fprintf(fp, "POP R%d\n", r1);
 			}
 			break;
-		case RETURN:
+		case RET:
 			r1 = codeGen(t->Ptr1);
 			r2 = getReg();
 			fprintf(fp, "MOV R%d, BP\n", r2);

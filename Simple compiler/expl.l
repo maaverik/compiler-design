@@ -26,21 +26,21 @@
 "endif" {return ENDIF;}
 "break" {return BREAK;}
 "continue" {return CONTINUE;}
-"integer" 	{return INT;}
-"boolean"	{return BOOL;}
+"int" 	{return INT;}
+"bool"	{return BOOL;}
 "true" 	{yylval = TreeCreate(BOOL, BOOL, TRUE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "false"	{yylval = TreeCreate(BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "decl" 	{return DECL;}
 "enddecl" {return ENDDECL;}
 "main" {return MAIN;}
-"return" {return RETURN;}
+"return" {return RET;}
 
-[=]     { return ASGN;}
+[=]     {return ASGN;}
 [+]		{return PLUS;}
 [*] 	{return MUL;}
-[-]		{return SUB;}
+"-"		{return SUB;}
 [/]		{return DIV;}
-[);(] 	{return *yytext;}
+[);({}] 	{return *yytext;}
 [ \t\n] {}
 ","	{return *yytext;}
 ("["|"]")	{return *yytext;}
@@ -53,6 +53,6 @@
 	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);
 	//Ginstall(temp, NUM, sizeof(int));
 	return ID;}
-"-"?[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
+[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
 
 %%

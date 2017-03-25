@@ -1,4 +1,5 @@
 #include "y.tab.h"
+#include "sym_table.h"
 #include "lsym_table.h"
 #include <string.h>
 #include <stdlib.h>
@@ -7,30 +8,29 @@
 extern struct Lsymbol *LST;
 int nextLocation = 1;
 
-struct Lsymbol* LInstall(char *name, int type, int size){
+struct Lsymbol* Linstall(char *name, int type, int size){
 	struct Lsymbol *i;
 
  	if (LST == NULL) {
- 		LST = malloc(sizeof(struct Gsymbol));
+ 		LST = malloc(sizeof(struct Lsymbol));
  		i = LST;
  	}
  	else {
  		i = LST;
  		while(i->next != NULL){
  			if (name == i -> name){
-	 			printf("Variable %s already declared once\n", name);
+	 			printf("Variable %s already declared once locally\n", name);
 	 			exit(-1);
 	 		}
  			i = i->next;
 	 	}
 
- 		i->next = malloc(sizeof(struct Gsymbol));
+ 		i->next = malloc(sizeof(struct Lsymbol));
  		i = i->next;
  	}
 
  	i->name = name;
  	i->type = type;
- 	i->size = size;
 
  	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
  		i->binding = nextLocation;
@@ -40,7 +40,7 @@ struct Lsymbol* LInstall(char *name, int type, int size){
  		printf("Wrong type\n");
 }
 
-struct Lsymbol* LLookup(struct Lsymbol *LST, char *name){
+struct Lsymbol* LLookup(char *name){
 	struct Lsymbol *tmp = LST;
 	while (tmp != NULL){
 		if (strcmp(tmp->name, name) == 0){
