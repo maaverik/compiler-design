@@ -1,19 +1,19 @@
 decl
-	int n, ar[100], i, j, x, temp;
-    bool b;
+	int ar[100];
+	bool b;
 enddecl
 int main() {
+decl
+	int n, i, j, x, temp;
+enddecl
 begin
-	write(1);
-	write(2);
 	read(n);
-	write(3);
 	i=0;
+	write(i);
 	while(i<n) do
 		read(ar[i]);
 		i=i+1;
 	endwhile;
-	write(111);
 	i=0;
 	j=1;
 	while(i<n) do

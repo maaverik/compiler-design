@@ -6,15 +6,20 @@ int factorial(int n){
         int f;
     enddecl
     begin
+        write(n);
         if( n==0 ) then
-            f = 1;
+            write(11);
+            f = 5;
         else
             if( n==1 ) then
-                f = 1;
+                write(22);
+                f = 4;
             else
+                write(33);
                 f = n * factorial(n-1);
             endif;
         endif;
+        write(44);
         return f;
     end
 }
