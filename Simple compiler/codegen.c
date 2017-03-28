@@ -68,11 +68,11 @@ void funcDecl(){
 	fprintf(fp, "PUSH BP\n");
 	fprintf(fp, "MOV BP,SP\n");
 	printf("%s : size = %d\n", func_name, Glookup(func_name)->size);
-	fprintf(fp, "ADD SP, %d\n", Glookup(func_name)->size); // pushing empty space for local variables
+	fprintf(fp, "ADD SP, %d\n", Glookup(func_name)->size + 1); // pushing empty space for local variables
 }
 
 void funcRet(){
-	fprintf(fp, "SUB SP, %d\n", Glookup(func_name)->size); //pop space for local variables
+	fprintf(fp, "SUB SP, %d\n", Glookup(func_name)->size + 1); //pop space for local variables
 	freeReg();
 	fprintf(fp, "POP BP\n");
 	if (strcmp(func_name, "MAIN") != 0)
@@ -149,6 +149,20 @@ int codeGen(struct tnode* t){
 			r1 = codeGen(t->Ptr1);
 			r2 = codeGen(t->Ptr2);
 			fprintf(fp, "NE R%d, R%d\n", r1, r2);
+			freeReg();
+			return r1;
+			break;
+		case AND:
+			r1 = codeGen(t->Ptr1);
+			r2 = codeGen(t->Ptr2);
+			printf("Haven't implemented AND yet\n");
+			freeReg();
+			return r1;
+			break;
+		case OR:
+			r1 = codeGen(t->Ptr1);
+			r2 = codeGen(t->Ptr2);
+			printf("Haven't implemented OR yet\n");
 			freeReg();
 			return r1;
 			break;

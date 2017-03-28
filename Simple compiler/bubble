@@ -9,7 +9,6 @@ enddecl
 begin
 	read(n);
 	i=0;
-	write(i);
 	while(i<n) do
 		read(ar[i]);
 		i=i+1;

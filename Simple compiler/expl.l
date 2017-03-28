@@ -54,5 +54,7 @@
 	//Ginstall(temp, NUM, sizeof(int));
 	return ID;}
 [0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
+"&&"	{return AND;}
+"||"	{return OR;}
 
 %%

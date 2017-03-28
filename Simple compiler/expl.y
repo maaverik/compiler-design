@@ -1,6 +1,7 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include <string.h>
 	#include "exptree.h"
 	#include "sym_table.h"
 	#include "codegen.h"
@@ -17,8 +18,8 @@
 	extern int nextLocation;
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS
-%nonassoc GT LT EQ NEQ
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR
+%nonassoc GT LT EQ NEQ AND OR
 %left PLUS SUB
 %left MUL DIV
 
@@ -97,6 +98,10 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 				printf("Argument types don't match 1\n");
 				exit(0);
 			}
+			if (strcmp(t->name, p->name) != 0){
+				printf("Argument names don't match\n");
+				exit(0);
+			}
 			t = t->next;
 			p = p->next;
 		}
@@ -159,16 +164,6 @@ LId : ID {
 		}
 		Linstall($1->NAME,var_type,1);
 	}
-	| ID '[' INT ']' {
-		if ($3->TYPE != INT) {
-			printf("Type error in int array declaration.\n");
-			exit(-1);
-		}
-		if (var_type == INT)
-			Ginstall($1->NAME, INTARR, 1*$3->VALUE, NULL);
-		else
-			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE, NULL);
-	}
 	;
 
 Mainblock : INT MAIN '(' ')' '{' LDefBlock Body '}' {
@@ -230,7 +225,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| READ '(' ID ')' ';' {
-			if(Glookup($3->NAME ) == NULL && LLookup($1->NAME) == NULL){
+			if(Glookup($3->NAME ) == NULL && LLookup($3->NAME) == NULL){
 				printf("Unallocated variable '%s' in read\n", $3->NAME);
 				exit(0);
 			}
@@ -238,7 +233,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| READ '(' ID '[' expr ']' ')' ';' 	{
-			if(Glookup($3->NAME) == NULL){
+			if(Glookup($3->NAME) == NULL && LLookup($3->NAME) == NULL){
 				printf("Unallocated variable '%s' in readarr\n", $3->NAME);
 				exit(0);
 			}
@@ -306,7 +301,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| ID '[' expr ']' ASGN expr ';'	{
-			if(Glookup($1->NAME) == NULL){
+			if(Glookup($1->NAME) == NULL && LLookup($1->NAME) == NULL){
 				printf("Unallocated variable '%s' in asgnarr\n", $1->NAME);
 				exit(0);
 			}
@@ -454,6 +449,20 @@ expr: expr PLUS expr {
 			exit(0);
 		}
 		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
+	 }
+	 | expr AND expr {
+	 	if($1->TYPE != BOOL || $3->TYPE != BOOL){
+			printf("type error: &&\n");
+			exit(0);
+		}
+		 $$ = makeOperatorNode(AND, BOOL, $1, $3);
+	 }
+	 | expr OR expr {
+	 	if($1->TYPE != BOOL || $3->TYPE != BOOL){
+			printf("type error: ||\n");
+			exit(0);
+		}
+		 $$ = makeOperatorNode(OR, BOOL, $1, $3);
 	 }
 	 | ID '(' Args ')' {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;

@@ -77,7 +77,9 @@ extern int yydebug;
     BOOL = 287,
     MAIN = 288,
     RET = 289,
-    ARGS = 290
+    ARGS = 290,
+    AND = 291,
+    OR = 292
   };
 #endif
 /* Tokens.  */
@@ -114,6 +116,8 @@ extern int yydebug;
 #define MAIN 288
 #define RET 289
 #define ARGS 290
+#define AND 291
+#define OR 292
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
