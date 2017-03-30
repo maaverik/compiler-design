@@ -1,5 +1,5 @@
 decl
-	int ar[100], readarr(int tmp), writearr(int temp, int a, int b);
+	int ar[100], readarr(int tmp), writearr(int temp);
 	bool b;
 enddecl
 
@@ -11,7 +11,6 @@ int readarr(int tmp)
 
   begin
     count=0;
-
     while(count < tmp) do
       read(ar[count]);
       count=count+1;
@@ -20,7 +19,7 @@ int readarr(int tmp)
   end
 }
 
-int writearr(int temp, int a, int b)
+int writearr(int temp)
 {
   decl
     int count;
@@ -28,7 +27,6 @@ int writearr(int temp, int a, int b)
 
   begin
   	count = 0;
-  	write(temp);
     while(count < temp) do
       write(ar[count]);
       count = count+1;
@@ -40,7 +38,7 @@ int writearr(int temp, int a, int b)
 
 int main() {
 decl
-	int n, i, j, x, temp;
+	int n, i, j, x, temp, count;
 enddecl
 begin
 	read(n);
@@ -61,7 +59,7 @@ begin
 		endwhile;
 		i=i+1;
 	endwhile;
-	writearr(n, 5 ,7);
+	writearr(n);
 	return 0;
 end
 }

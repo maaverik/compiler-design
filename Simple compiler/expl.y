@@ -16,7 +16,7 @@
 	int yyerror(char *);
 	struct Lsymbol *LST = NULL;
 	int var_type;
-	extern int nextLocation;
+	int nextLocation = 1;
 %}
 
 %token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR LE GE BRKP
@@ -112,6 +112,7 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		p = (struct Paramstruct*)$4;
 		while(p != NULL){		// Adding parameters to local symbol table
 			LLookup(p->name)->binding = argBinding;
+			printf("%s %d\n", p->name, LLookup(p->name)->binding);
 			argBinding--;
 			p = p->next;
 		}
@@ -137,6 +138,7 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 arglist : arg ',' arglist {
 		if (GDeclOver){
 			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
+			nextLocation = 1;
 		}
 		printf("%s\n", ((struct Paramstruct*)$1)->name);
 		((struct Paramstruct*)$1)->next=((struct Paramstruct*)$3);
@@ -146,6 +148,7 @@ arglist : arg ',' arglist {
 		printf("%s\n", ((struct Paramstruct*)$1)->name);
 		if (GDeclOver){
 			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
+			nextLocation = 1;
 		}
 		$$ = $1;
 	}
@@ -182,6 +185,7 @@ LId : ID {
 			exit(-1);
 		}
 		Linstall($1->NAME,var_type,1);
+		printf("Installed %s at %d\n", $1->NAME, LLookup($1->NAME)->binding);
 	}
 	;
 
@@ -333,7 +337,9 @@ stmt: 	ID ASGN expr ';' {
  		| ID '(' Args ')' ';' {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
 			struct tnode *t = $3;
+			printf("Func: %s\n", $1->NAME);
 			while (t != NULL && p != NULL){
+				printf("Val : %d\n", t->Ptr1->VALUE);
 				if (t->TYPE != p->type){
 					printf("Argument types don't match 2\n");
 					exit(0);

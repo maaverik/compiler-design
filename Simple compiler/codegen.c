@@ -363,6 +363,7 @@ int codeGen(struct tnode* t){
 			struct tnode *tmp = t->Arglist;
 			r3 = 0;
 			while(tmp != NULL){	//push arguments
+				printf("1111\n");
 				r1 = codeGen(tmp->Ptr1);
 				fprintf(fp, "PUSH R%d\n", r1);
 				tmp = tmp->Arglist;

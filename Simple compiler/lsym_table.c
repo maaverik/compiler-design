@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 extern struct Lsymbol *LST;
-int nextLocation = 1;
+extern int nextLocation;
 
 struct Lsymbol* Linstall(char *name, int type, int size){
 	struct Lsymbol *i;
