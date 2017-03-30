@@ -79,7 +79,10 @@ extern int yydebug;
     RET = 289,
     ARGS = 290,
     AND = 291,
-    OR = 292
+    OR = 292,
+    LE = 293,
+    GE = 294,
+    BRKP = 295
   };
 #endif
 /* Tokens.  */
@@ -118,6 +121,9 @@ extern int yydebug;
 #define ARGS 290
 #define AND 291
 #define OR 292
+#define LE 293
+#define GE 294
+#define BRKP 295
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -34,6 +34,7 @@
 "enddecl" {return ENDDECL;}
 "main" {return MAIN;}
 "return" {return RET;}
+"breakpoint" {return BRKP;}
 
 [=]     {return ASGN;}
 [+]		{return PLUS;}
@@ -45,6 +46,8 @@
 ","	{return *yytext;}
 ("["|"]")	{return *yytext;}
 "<" 	{return LT;}
+"<=" 	{return LE;}
+">=" 	{return GE;}
 ">" 	{return GT;}
 "==" 	{return EQ;}
 "!=" 	{return NEQ;}

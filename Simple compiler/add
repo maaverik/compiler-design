@@ -1,0 +1,39 @@
+decl
+    int result, add(int a, int b), double(int c, int d);
+enddecl
+
+
+int double(int c, int d){
+    decl
+    enddecl
+    begin
+        write(c*2);
+        write(d*2);
+        return (c+d)*2;
+    end
+}
+
+int add(int a, int b){
+    decl
+        int f;
+    enddecl
+    begin
+        write(a);
+        write(b);
+        return double(a, b);
+    end
+}
+
+
+int main(){
+    decl
+        int a, b;
+    enddecl
+    begin
+        read(a);
+        read(b);
+        result = add(a, b);
+        write(result);
+        return 1;
+    end
+}

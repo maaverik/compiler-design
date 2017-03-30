@@ -145,6 +145,20 @@ int codeGen(struct tnode* t){
 			freeReg();
 			return r1;
 			break;
+		case LE:
+			r1 = codeGen(t->Ptr1);
+			r2 = codeGen(t->Ptr2);
+			fprintf(fp, "LE R%d, R%d\n", r1, r2);
+			freeReg();
+			return r1;
+			break;
+		case GE:
+			r1 = codeGen(t->Ptr1);
+			r2 = codeGen(t->Ptr2);
+			fprintf(fp, "GE R%d, R%d\n", r1, r2);
+			freeReg();
+			return r1;
+			break;
 		case NEQ:
 			r1 = codeGen(t->Ptr1);
 			r2 = codeGen(t->Ptr2);
@@ -166,6 +180,10 @@ int codeGen(struct tnode* t){
 			freeReg();
 			return r1;
 			break;
+		case EVAL:
+			r1 = codeGen(t->Ptr1);
+			return r1;
+			break;
 		case ASGN:
 			r1 = codeGen(t->Ptr2);
 			if (LLookup(t->NAME) != NULL){
@@ -173,6 +191,7 @@ int codeGen(struct tnode* t){
 				fprintf(fp, "MOV R%d, BP\n", r2);
 				fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->NAME)->binding);
 				fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+				freeReg();
 			}
 			else{
 				fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
@@ -204,9 +223,9 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
-			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
-				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
+			for(r1=nextFreeReg-1;r1>=0;r1--)	//pop all pushed registers
+				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
 			break;
 		case READ:
@@ -238,7 +257,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
-			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
+			for(r1=nextFreeReg-1;r1>=0;r1--)	//pop all pushed registers
 				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
 			freeReg();
@@ -332,7 +351,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
-			for(r1=nextFreeReg-2;r1>=0;r1--)	//pop all pushed registers
+			for(r1=nextFreeReg-1;r1>=0;r1--)	//pop all pushed registers
 				fprintf(fp, "POP R%d\n",r1);
 			freeReg();
 			freeReg();
@@ -360,9 +379,6 @@ int codeGen(struct tnode* t){
 			}
 			return r2;
 			break;
-		case ARGS:
-			printf("Here\n");
-			break;
 		case RET:
 			r2 = getReg();
 			r1 = codeGen(t->Ptr1);
@@ -372,6 +388,9 @@ int codeGen(struct tnode* t){
 			funcRet();
 			freeReg();
 			return r2;
+			break;
+		case BRKP:
+			fprintf(fp, "BRKP\n");
 			break;
 
 		default:

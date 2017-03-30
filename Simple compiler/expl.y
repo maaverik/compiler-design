@@ -12,14 +12,15 @@
 	extern FILE *yyin;
 
 	int yylex();
+	int GDeclOver = 0;
 	int yyerror(char *);
 	struct Lsymbol *LST = NULL;
 	int var_type;
 	extern int nextLocation;
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR
-%nonassoc GT LT EQ NEQ AND OR
+%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR LE GE BRKP
+%nonassoc GT LT EQ NEQ AND OR LE GE
 %left PLUS SUB
 %left MUL DIV
 
@@ -30,8 +31,8 @@ Program : GDefblock FdefList Mainblock {}
 	| GDefblock Mainblock {}
      ;
 
-GDefblock : DECL decllist ENDDECL {}
-	| DECL ENDDECL {}
+GDefblock : DECL decllist ENDDECL {GDeclOver = 1;}
+	| DECL ENDDECL {GDeclOver = 1;}
 	;
 
 decllist : decl decllist {}
@@ -74,14 +75,6 @@ var : ID '[' INT ']' {
 			exit(-1);
 		}
 		Ginstall($1->NAME, var_type, -1, (struct Paramstruct*)$3);
-		int argBinding = -3;
-		struct Paramstruct *p = (struct Paramstruct*)$3;
-		while(p != NULL){		// Adding parameters to local symbol table
-			Linstall(p->name, p->type, 1);
-			LLookup(p->name)->binding = argBinding;
-			argBinding--;
-			p = p->next;
-		}
 	}
 	;
 
@@ -91,9 +84,14 @@ FdefList : FdefList Fdef {}
 
 Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		//Ginstall($2->NAME, var_type, -1, $3);
+		if (Glookup($2->NAME) == NULL){
+			printf("%s not defined\n", $2->NAME);
+			exit(-1);
+		}
 		struct Paramstruct *p = Glookup($2->NAME)->paramlist;
 		struct Paramstruct *t = (struct Paramstruct *)$4;
 		while (t != NULL && p != NULL){
+			printf("%s %s\n", p->name, t->name);
 			if (t->type != p->type){
 				printf("Argument types don't match 1\n");
 				exit(0);
@@ -108,6 +106,14 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		if (t != NULL || p != NULL){
 			printf("Incorrect number of arguments 1\n");
 			exit(0);
+		}
+
+		int argBinding = -3;
+		p = (struct Paramstruct*)$4;
+		while(p != NULL){		// Adding parameters to local symbol table
+			LLookup(p->name)->binding = argBinding;
+			argBinding--;
+			p = p->next;
 		}
 
 		struct Lsymbol *l = LST;
@@ -128,8 +134,21 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 	}
 	;
 
-arglist : arglist ',' arg {((struct Paramstruct*)$1)->next=((struct Paramstruct*)$3);}
-	| arg {$$ = $1;}
+arglist : arg ',' arglist {
+		if (GDeclOver){
+			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
+		}
+		printf("%s\n", ((struct Paramstruct*)$1)->name);
+		((struct Paramstruct*)$1)->next=((struct Paramstruct*)$3);
+		$$=$1;
+	}
+	| arg {
+		printf("%s\n", ((struct Paramstruct*)$1)->name);
+		if (GDeclOver){
+			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
+		}
+		$$ = $1;
+	}
 	| %empty {$$ = NULL;}
 	;
 
@@ -328,6 +347,7 @@ stmt: 	ID ASGN expr ';' {
  			}
  			$$ = TreeCreate(-1, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
+ 		| BRKP ';' {$$ = TreeCreate(-1, BRKP, -1, NULL, NULL, NULL, NULL, NULL);}
 		;
 
 Args: Args ',' expr {$$ = TreeCreate($3->TYPE, ARGS, -1, NULL, $1, $3, NULL, NULL);}
@@ -374,7 +394,7 @@ expr: expr PLUS expr {
 		$$ = makeOperatorNode(DIV, INT, $1, $3);
 	}
 
-	 | '(' expr ')'	{$$ = TreeCreate(-1, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
+	 | '(' expr ')'	{$$ = TreeCreate($2->TYPE, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
 
 	 | INT {$$ = $1;}
 
@@ -433,6 +453,22 @@ expr: expr PLUS expr {
 			exit(0);
 		}
 		 $$ = makeOperatorNode(GT, BOOL, $1, $3);
+	 }
+
+	 | expr GE expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: >\n");
+			exit(0);
+		}
+		 $$ = makeOperatorNode(GE, BOOL, $1, $3);
+	 }
+
+	 | expr LE expr {
+	 	if($1->TYPE != INT || $3->TYPE != INT){
+			printf("type error: >\n");
+			exit(0);
+		}
+		 $$ = makeOperatorNode(LE, BOOL, $1, $3);
 	 }
 
 	 | expr EQ expr {
