@@ -10,7 +10,7 @@
 
 struct Gsymbol{
 	char *name;               //name of the variable or function
-	int type;   //pointer to the Typetable entry of variable type/return type of the function
+	struct Typetable *type;   //pointer to the Typetable entry of variable type/return type of the function
 	int size;                 //size of an array or a user defined type. (The default types have size 1)
 	int binding;              //stores the static memory address allocated to the variable
 	struct Paramstruct *paramlist; //pointer to the head of the formal parameter list in the case of functions
@@ -21,10 +21,10 @@ struct Gsymbol{
 
 struct Paramstruct{
 	char *name;	         		//stores the name of the parameter
-	int type;  	//pointer to type table entry of parameter type
+	struct Typetable *type;  	//pointer to type table entry of parameter type
 	struct Paramstruct *next;	//pointer to the next parameter
 };
 
 struct Gsymbol *Glookup(char *name); // Look up for a global identifier
 
-void Ginstall(char *name,int type, int size, struct Paramstruct *paramlist); // Installation
+void Ginstall(char *name, struct Typetable *type, int size, struct Paramstruct *paramlist); // Installation

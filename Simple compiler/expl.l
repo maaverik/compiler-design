@@ -7,8 +7,13 @@
 	#include "y.tab.h"
 	#include "exptree.h"
 	#include "sym_table.h"
+	#include "typetable.h"
 
 	struct Gsymbol *GST = NULL;
+	extern struct Typetable *VAR_TYPE_INT;
+	extern struct Typetable *VAR_TYPE_BOOL;
+	extern struct Typetable *VAR_TYPE_VOID;
+
 %}
 
 %%
@@ -35,11 +40,16 @@
 "main" {return MAIN;}
 "return" {return RET;}
 "breakpoint" {return BRKP;}
+"Initialize" {return INIT;}
+"alloc"	{return ALLOC;}
+"dealloc" {return DEALLOC;}
+"type" 	{return TYPE;}
+"endtype" {return ENDTYPE;}
 
 [=]     {return ASGN;}
 [+]		{return PLUS;}
 [*] 	{return MUL;}
-"-"		{return SUB;}
+"-"		{return MINUS;}
 [/]		{return DIV;}
 [);({}] 	{return *yytext;}
 [ \t\n] {}
@@ -53,10 +63,9 @@
 "!=" 	{return NEQ;}
 [a-zA-Z_][a-zA-Z_0-9]*   { char *temp=malloc(sizeof(char)*(strlen(yytext)+1));
 	strcpy(temp, yytext);
-	yylval = TreeCreate(-1, ID, -1, temp, NULL, NULL, NULL, NULL);
-	//Ginstall(temp, NUM, sizeof(int));
+	yylval = TreeCreate(VAR_TYPE_VOID, ID, -1, temp, NULL, NULL, NULL, NULL);
 	return ID;}
-[0-9]+  { yylval = TreeCreate(INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
+[0-9]+  { yylval = TreeCreate(VAR_TYPE_INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
 "&&"	{return AND;}
 "||"	{return OR;}
 

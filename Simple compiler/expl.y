@@ -6,33 +6,67 @@
 	#include "sym_table.h"
 	#include "codegen.h"
 	#include "lsym_table.h"
+	#include "typetable.h"
 
 	#define YYSTYPE struct tnode*
 
-	extern FILE *yyin;
-
 	int yylex();
-	int GDeclOver = 0;
+	extern FILE *yyin;
+	int isGDeclOver = 0;
 	int yyerror(char *);
 	struct Lsymbol *LST = NULL;
-	int var_type;
+	struct Typetable *var_type;
 	int nextLocation = 1;
+	extern struct Typetable *VAR_TYPE_INT;
+	extern struct Typetable *VAR_TYPE_INTARR;
+	extern struct Typetable *VAR_TYPE_BOOLARR;
+	extern struct Typetable *VAR_TYPE_BOOL;
+	extern struct Typetable *VAR_TYPE_VOID;
+
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL SUB DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR LE GE BRKP
-%nonassoc GT LT EQ NEQ AND OR LE GE
-%left PLUS SUB
-%left MUL DIV
+%token ID READ ASGN NEWLINE WRITE PLUS MUL MINUS DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR NOT LE GE BRKP INIT ALLOC DEALLOC TYPE ENDTYPE
+%nonassoc GT LT EQ NEQ LE GE
+%left PLUS MINUS MUL DIV AND OR NOT
 
 
 %%
 
-Program : GDefblock FdefList Mainblock {}
-	| GDefblock Mainblock {}
+Program : TypeInit TypeDefBlock GDefblock FdefList Mainblock {}
+	| TypeDefBlock GDefblock Mainblock {}
      ;
 
-GDefblock : DECL decllist ENDDECL {GDeclOver = 1;}
-	| DECL ENDDECL {GDeclOver = 1;}
+TypeInit : {TypeTableCreate();}
+
+TypeDefBlock  : TYPE TypeDefList ENDTYPE {}
+              | %empty {}
+              ;
+
+TypeDefList   : TypeDefList TypeDef {}
+              | TypeDef {}
+              ;
+
+TypeDef       : TypeDefHead '{' FieldDeclList '}'   {
+				int size = findSize($3); TInstall($1->name,size,$3);
+				}
+              ;
+
+TypeDefHead : ID { TInstallId($1->name); $$ = $1;}
+
+FieldDeclList : FieldDeclList FieldDecl {$$ = $2; insertField($1,$2);}
+              | FieldDecl {$$ = $1;}
+              ;
+
+FieldDecl    : TypeName ID ';' {$$ = Finstall($1, $2->name);}
+
+TypeName :  INT {$$ = strdup("INT");}
+			| BOOL {$$ = strdup("BOOL");}
+			| ID {$$ = $1->name;}
+			;
+
+
+GDefblock : DECL decllist ENDDECL {isGDeclOver = 1;}
+	| DECL ENDDECL {isGDeclOver = 1;}
 	;
 
 decllist : decl decllist {}
@@ -42,8 +76,10 @@ decllist : decl decllist {}
 decl : type varlist ';' {}
 	;
 
-type : INT { var_type = INT;}
-	| BOOL {var_type = BOOL;}
+type :  INT { var_type = TLookup(strdup("INT"));}
+	 | BOOL { var_type = TLookup(strdup("BOOL"));}
+	 | ID { var_type = TLookup($1->name);}
+	 ;
 
 varlist : varlist ',' var {}
 	| var {};
@@ -57,10 +93,10 @@ var : ID '[' INT ']' {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
-		if (var_type == INT)
-			Ginstall($1->NAME, INTARR, 1*$3->VALUE, NULL);
+		if (var_type == VAR_TYPE_INT)
+			Ginstall($1->NAME, VAR_TYPE_INTARR, 1*$3->VALUE, NULL);
 		else
-			Ginstall($1->NAME, BOOLARR, 1*$3->VALUE, NULL);
+			Ginstall($1->NAME, VAR_TYPE_BOOLARR, 1*$3->VALUE, NULL);
 	}
 	| ID {
 		if (Glookup($1->NAME) != NULL){
@@ -83,7 +119,10 @@ FdefList : FdefList Fdef {}
 	;
 
 Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
-		//Ginstall($2->NAME, var_type, -1, $3);
+		if (var_type == NULL){
+			printf("Type is not defined\n");
+			exit(-1);
+		}
 		if (Glookup($2->NAME) == NULL){
 			printf("%s not defined\n", $2->NAME);
 			exit(-1);
@@ -91,7 +130,6 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		struct Paramstruct *p = Glookup($2->NAME)->paramlist;
 		struct Paramstruct *t = (struct Paramstruct *)$4;
 		while (t != NULL && p != NULL){
-			printf("%s %s\n", p->name, t->name);
 			if (t->type != p->type){
 				printf("Argument types don't match 1\n");
 				exit(0);
@@ -112,7 +150,6 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 		p = (struct Paramstruct*)$4;
 		while(p != NULL){		// Adding parameters to local symbol table
 			LLookup(p->name)->binding = argBinding;
-			printf("%s %d\n", p->name, LLookup(p->name)->binding);
 			argBinding--;
 			p = p->next;
 		}
@@ -136,17 +173,15 @@ Fdef : type ID '(' arglist ')' '{' LDefBlock Body '}' {
 	;
 
 arglist : arg ',' arglist {
-		if (GDeclOver){
+		if (isGDeclOver){
 			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
 			nextLocation = 1;
 		}
-		printf("%s\n", ((struct Paramstruct*)$1)->name);
 		((struct Paramstruct*)$1)->next=((struct Paramstruct*)$3);
-		$$=$1;
+		$$ = $1;
 	}
 	| arg {
-		printf("%s\n", ((struct Paramstruct*)$1)->name);
-		if (GDeclOver){
+		if (isGDeclOver){
 			Linstall(((struct Paramstruct*)$1)->name, ((struct Paramstruct*)$1)->type, 1);
 			nextLocation = 1;
 		}
@@ -156,6 +191,10 @@ arglist : arg ',' arglist {
 	;
 
 arg : type ID {
+		if (var_type == NULL){
+			printf("Type is not defined\n");
+			exit(-1);
+		}
 		struct Paramstruct *p = malloc(sizeof(struct Paramstruct));
 		p->name = $2->NAME;
 		p->type = var_type;
@@ -185,12 +224,11 @@ LId : ID {
 			exit(-1);
 		}
 		Linstall($1->NAME,var_type,1);
-		printf("Installed %s at %d\n", $1->NAME, LLookup($1->NAME)->binding);
 	}
 	;
 
 Mainblock : INT MAIN '(' ')' '{' LDefBlock Body '}' {
-		Ginstall("MAIN", INT, -1, NULL);
+		Ginstall("MAIN", VAR_TYPE_INT, -1, NULL);
 		struct Lsymbol *l = LST;
 		int size = 0;
 		while (l != NULL){
@@ -211,7 +249,7 @@ Mainblock : INT MAIN '(' ')' '{' LDefBlock Body '}' {
 	;
 
 Body : BEG slist RetStmt END {
-		$$ = TreeCreate(-1, STMT, -1, NULL, NULL, $2, $3, NULL);
+		$$ = TreeCreate(VAR_TYPE_VOID, STMT, -1, NULL, NULL, $2, $3, NULL);
 	}
 	;
 
@@ -220,7 +258,7 @@ slist : slist stmt {
 			printf("Type error\n");
 			exit(-1);
 		}
-		$$ = TreeCreate(-1, STMT, -1, NULL, NULL, $1, $2, NULL);
+		$$ = TreeCreate(VAR_TYPE_VOID, STMT, -1, NULL, NULL, $1, $2, NULL);
 	}
     | stmt {
      	if($1->TYPE != -1){
@@ -244,7 +282,7 @@ stmt: 	ID ASGN expr ';' {
 				printf("type error: =\n");
 				exit(0);
 			}
-			$$ = TreeCreate(-1, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
 
 		| READ '(' ID ')' ';' {
@@ -252,7 +290,7 @@ stmt: 	ID ASGN expr ';' {
 				printf("Unallocated variable '%s' in read\n", $3->NAME);
 				exit(0);
 			}
-			$$ = TreeCreate(-1, READ, -1, $3->NAME, NULL, $3, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, READ, -1, $3->NAME, NULL, $3, NULL, NULL);
 		}
 
 		| READ '(' ID '[' expr ']' ')' ';' 	{
@@ -264,15 +302,15 @@ stmt: 	ID ASGN expr ';' {
 				printf("type error: ARRREAD[expr]");
 				exit(0);
 			}
-			if(Glookup($3->NAME)->type != INTARR && Glookup($3->NAME)->type != BOOLARR)	{
+			if(Glookup($3->NAME)->type != VAR_TYPE_INTARR && Glookup($3->NAME)->type != VAR_TYPE_BOOLARR)	{
 				printf("type error: ARRREAD");
 				exit(0);
 			}
-	 	 	$$ = TreeCreate(-1, ARRREAD, 0, $3->NAME, NULL, $5, NULL, NULL);
+	 	 	$$ = TreeCreate(VAR_TYPE_VOID, ARRREAD, 0, $3->NAME, NULL, $5, NULL, NULL);
 		}
 
 		| WRITE '(' expr ')' ';' {
-			$$ = TreeCreate(-1, WRITE, -1, NULL, NULL, $3, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, WRITE, -1, NULL, NULL, $3, NULL, NULL);
 		}
 
 		| IF '(' expr ')' THEN slist ELSE slist ENDIF ';' {
@@ -280,15 +318,15 @@ stmt: 	ID ASGN expr ';' {
 				printf("type error: IF\n");
 				exit(0);
 			}
-			if($6->TYPE != -1){
+			if($6->TYPE != VAR_TYPE_VOID){
 				printf("type error: THEN\n");
 				exit(0);
 			}
-			if($8->TYPE != -1){
+			if($8->TYPE != VAR_TYPE_VOID){
 				printf("type error: ELSE\n");
 				exit(0);
 			}
-			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, $8);
+			$$ = TreeCreate(VAR_TYPE_VOID, IF, -1, NULL, NULL, $3, $6, $8);
 		}
 
 		| IF '(' expr ')' THEN slist ENDIF ';' {
@@ -296,11 +334,11 @@ stmt: 	ID ASGN expr ';' {
 				printf("type error: IF\n");
 				exit(0);
 			}
-			if($6->TYPE != -1){
+			if($6->TYPE != VAR_TYPE_VOID){
 				printf("type error: THEN\n");
 				exit(0);
 			}
-			$$ = TreeCreate(-1, IF, -1, NULL, NULL, $3, $6, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, IF, -1, NULL, NULL, $3, $6, NULL);
 		}
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
@@ -308,19 +346,19 @@ stmt: 	ID ASGN expr ';' {
 				printf("type error: WHILE\n");
 				exit(0);
 			}
-			if($6->TYPE != -1){
+			if($6->TYPE != VAR_TYPE_VOID){
 				printf("type error: DO\n");
 				exit(0);
 			}
-			$$ = TreeCreate(-1, WHILE, -1, NULL, NULL, $3, $6, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, WHILE, -1, NULL, NULL, $3, $6, NULL);
 		}
 
 		| BREAK ';' {
-			$$ = TreeCreate(-1, BREAK, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, BREAK, -1, NULL, NULL, NULL, NULL, NULL);
 		}
 
 		| CONTINUE ';' {
-			$$ = TreeCreate(-1, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, CONTINUE, -1, NULL, NULL, NULL, NULL, NULL);
 		}
 
 		| ID '[' expr ']' ASGN expr ';'	{
@@ -328,11 +366,11 @@ stmt: 	ID ASGN expr ';' {
 				printf("Unallocated variable '%s' in asgnarr\n", $1->NAME);
 				exit(0);
 			}
-			if(!(Glookup($1->NAME)->type == INTARR || $3->TYPE == INT || $6->TYPE == INT) && !(Glookup($1->NAME)->type == BOOLARR || $3->TYPE == INT || $6->TYPE == BOOL)){
+			if(!(Glookup($1->NAME)->type == VAR_TYPE_INTARR || $3->TYPE == VAR_TYPE_INT || $6->TYPE == VAR_TYPE_INT) && !(Glookup($1->NAME)->type == VAR_TYPE_BOOLARR || $3->TYPE == VAR_TYPE_INT || $6->TYPE == VAR_TYPE_BOOL)){
 				printf("type error: []=\n");
 				exit(0);
 	 		}
-			$$ = TreeCreate(-1, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ARRASGN, -1, $1->NAME, NULL, $3, $6, NULL);
  		}
  		| ID '(' Args ')' ';' {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
@@ -351,10 +389,17 @@ stmt: 	ID ASGN expr ';' {
  				printf("Incorrect number of arguments 2\n");
  				exit(0);
  			}
- 			$$ = TreeCreate(-1, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
+ 			$$ = TreeCreate(VAR_TYPE_VOID, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
- 		| BRKP ';' {$$ = TreeCreate(-1, BRKP, -1, NULL, NULL, NULL, NULL, NULL);}
+ 		| BRKP ';' {$$ = TreeCreate(VAR_TYPE_VOID, BRKP, -1, NULL, NULL, NULL, NULL, NULL);}
+		| INIT '(' ')' {}
+		| ID ASGN ALLOC '(' ')' {}
+		| FIELD ASGN ALLOC '(' ')' {}
+		| DEALLOC '(' ID ')' {}
+		| DEALLOC '(' FIELD ')' {}
+		| READ '(' FIELD ')' {}
 		;
+
 
 Args: Args ',' expr {$$ = TreeCreate($3->TYPE, ARGS, -1, NULL, $1, $3, NULL, NULL);}
 	| expr { $$ = TreeCreate($1->TYPE, ARGS, -1, NULL, NULL, $1, NULL, NULL);}
@@ -362,50 +407,46 @@ Args: Args ',' expr {$$ = TreeCreate($3->TYPE, ARGS, -1, NULL, $1, $3, NULL, NUL
 	;
 
 expr: expr PLUS expr {
-		if($1->TYPE != INT || $3->TYPE != INT){
+		if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: +\n");
 			exit(0);
 		}
-		$$ = makeOperatorNode(PLUS, INT, $1, $3);
+		$$ = makeOperatorNode(PLUS, VAR_TYPE_INT, $1, $3);
 	}
 
 	 | expr MUL expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: *\n");
 			exit(0);
 		}
-		$$ = makeOperatorNode(MUL, INT, $1, $3);
+		$$ = makeOperatorNode(MUL, VAR_TYPE_INT, $1, $3);
 	}
 
-	 | expr SUB expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 | expr MINUS expr {
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: -\n");
 			exit(0);
 		}
-		$$ = makeOperatorNode(SUB, INT, $1, $3);
+		$$ = makeOperatorNode(MINUS, VAR_TYPE_INT, $1, $3);
 	}
-	 | SUB expr {
-	 	if($2->TYPE != INT){
+	 | MINUS expr {
+	 	if($2->TYPE != VAR_TYPE_INT){
 			printf("type error: unary -\n");
 			exit(0);
 		}
-		$$ = makeOperatorNode(SUB, INT, 0, $2);
+		$$ = makeOperatorNode(MINUS, VAR_TYPE_INT, 0, $2);
 	}
 
 	 | expr DIV expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: /\n");
 			exit(0);
 		}
-		$$ = makeOperatorNode(DIV, INT, $1, $3);
+		$$ = makeOperatorNode(DIV, VAR_TYPE_INT, $1, $3);
 	}
-
 	 | '(' expr ')'	{$$ = TreeCreate($2->TYPE, EVAL, -1, NULL, NULL, $2, NULL, NULL);}
-
 	 | INT {$$ = $1;}
-
 	 | BOOL {$$ = $1;}
-
 	 | ID {
 	  	if (LLookup($1->NAME) != NULL)
 	 		$1->TYPE = LLookup($1->NAME)->type;
@@ -417,26 +458,17 @@ expr: expr PLUS expr {
 	 	}
 	 	$$ = $1;
 	 }
-
 	 | ID '[' expr ']'	{
 	 	if($3->TYPE != INT){
 	 		printf("type error: []\n");
 			exit(0);
 	 	}
-	 	if (LLookup($1->NAME) != NULL){
-	 		if(LLookup($1->NAME)->type == INTARR){
-		 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
+	 	if (Glookup($1->NAME) != NULL){
+	 		if(Glookup($1->NAME)->type == VAR_TYPE_INTARR){
+		 		$$ = makeOperatorNode(ARRVAL, VAR_TYPE_INT, $1, $3);
 		 	}
-		 	else if(LLookup($1->NAME)->type == BOOLARR){
-		 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
-	 		}
-	 	}
-	 	else if (Glookup($1->NAME) != NULL){
-	 		if(Glookup($1->NAME)->type == INTARR){
-		 		$$ = makeOperatorNode(ARRVAL, INT, $1, $3);
-		 	}
-		 	else if(Glookup($1->NAME)->type == BOOLARR){
-		 		$$ = makeOperatorNode(ARRVAL, BOOL, $1, $3);
+		 	else if(Glookup($1->NAME)->type == VAR_TYPE_BOOLARR){
+		 		$$ = makeOperatorNode(ARRVAL, VAR_TYPE_BOOL, $1, $3);
 	 		}
 	 	}
 	 	else{
@@ -444,67 +476,68 @@ expr: expr PLUS expr {
 	 		exit(-1);
 	 	}
 	 }
-
 	 | expr LT expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: <\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(LT, BOOL, $1, $3);
+		 $$ = makeOperatorNode(LT, VAR_TYPE_BOOL, $1, $3);
 	 }
-
 	 | expr GT expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: >\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(GT, BOOL, $1, $3);
+		 $$ = makeOperatorNode(GT, VAR_TYPE_BOOL, $1, $3);
 	 }
-
 	 | expr GE expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: >\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(GE, BOOL, $1, $3);
+		 $$ = makeOperatorNode(GE, VAR_TYPE_BOOL, $1, $3);
 	 }
-
 	 | expr LE expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: >\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(LE, BOOL, $1, $3);
+		 $$ = makeOperatorNode(LE, VAR_TYPE_BOOL, $1, $3);
 	 }
-
 	 | expr EQ expr {
-	 	if(!(($1->TYPE == INT && $3->TYPE == INT) || ($1->TYPE == BOOL && $3->TYPE == BOOL))){
+	 	if(!(($1->TYPE == VAR_TYPE_INT && $3->TYPE == VAR_TYPE_INT) || ($1->TYPE == VAR_TYPE_BOOL && $3->TYPE == VAR_TYPE_BOOL))){
 			printf("type error: ==\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(EQ, BOOL, $1, $3);
+		 $$ = makeOperatorNode(EQ, VAR_TYPE_BOOL, $1, $3);
 	 }
-
 	 | expr NEQ expr {
-	 	if($1->TYPE != INT || $3->TYPE != INT){
+	 	if($1->TYPE != VAR_TYPE_INT || $3->TYPE != VAR_TYPE_INT){
 			printf("type error: !=\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(NEQ, BOOL, $1, $3);
+		 $$ = makeOperatorNode(NEQ, VAR_TYPE_BOOL, $1, $3);
 	 }
 	 | expr AND expr {
-	 	if($1->TYPE != BOOL || $3->TYPE != BOOL){
+	 	if($1->TYPE != VAR_TYPE_BOOL || $3->TYPE != VAR_TYPE_BOOL){
 			printf("type error: &&\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(AND, BOOL, $1, $3);
+		 $$ = makeOperatorNode(AND, VAR_TYPE_BOOL, $1, $3);
 	 }
 	 | expr OR expr {
-	 	if($1->TYPE != BOOL || $3->TYPE != BOOL){
+	 	if($1->TYPE != VAR_TYPE_BOOL || $3->TYPE != VAR_TYPE_BOOL){
 			printf("type error: ||\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(OR, BOOL, $1, $3);
+		 $$ = makeOperatorNode(OR, VAR_TYPE_BOOL, $1, $3);
+	 }
+	 | NOT expr {
+	 	if($3->TYPE != VAR_TYPE_BOOL){
+			printf("type error: ||\n");
+			exit(0);
+		}
+		 $$ = makeOperatorNode(OR, VAR_TYPE_BOOL, $1, $3);
 	 }
 	 | ID '(' Args ')' {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
@@ -527,7 +560,12 @@ expr: expr PLUS expr {
  			}
  			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
-		;
+ 	 | FIELD {}
+	 ;
+
+FIELD     : ID '.' ID { $$->type = $3->type; }
+          | FIELD '.' ID { $$->type = $3->type; }
+          ;
 
 RetStmt : RET expr ';'{ $$ = TreeCreate($2->TYPE, RET, -1, NULL, NULL, $2, NULL, NULL); }
 	;

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 
-struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *Arglist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
+struct tnode *TreeCreate(struct Typetable *TYPE, int NODETYPE, int VALUE, char *NAME, struct tnode *Arglist, struct tnode *Ptr1, struct tnode *Ptr2, struct tnode *Ptr3){
 	struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
 	temp->TYPE = TYPE;
 	temp->NODETYPE = NODETYPE;
@@ -19,7 +19,7 @@ struct tnode *TreeCreate(int TYPE, int NODETYPE, int VALUE, char *NAME, struct t
 	return temp;
 }
 
-struct tnode* makeOperatorNode(int op, int type, struct tnode *l, struct tnode *r){
+struct tnode* makeOperatorNode(int op, struct Typetable *type, struct tnode *l, struct tnode *r){
 	struct tnode *temp = TreeCreate(type, op, -1, NULL, NULL, l, r, NULL);
 	return temp;
 }
