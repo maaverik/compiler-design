@@ -8,7 +8,7 @@
 extern struct Lsymbol *LST;
 extern int nextLocation;
 
-struct Lsymbol* Linstall(char *name, int type, int size){
+struct Lsymbol* Linstall(char *name, struct Typetable *type, int size){
 	struct Lsymbol *i;
 
  	if (LST == NULL) {
@@ -32,12 +32,8 @@ struct Lsymbol* Linstall(char *name, int type, int size){
  	i->name = name;
  	i->type = type;
 
- 	if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
- 		i->binding = nextLocation;
- 		nextLocation += size;
- 	}
- 	else
- 		printf("Wrong type\n");
+ 	i->binding = nextLocation;
+ 	nextLocation += size;
 }
 
 struct Lsymbol* LLookup(char *name){

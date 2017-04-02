@@ -6,6 +6,7 @@
 #include "lsym_table.h"
 #include "exptree.h"
 #include "codegen.h"
+#include "typetable.h"
 
 char func_name[50];
 int nextFreeReg = 0;
@@ -32,6 +33,14 @@ void freeReg(){
 
 int getLabel(){
 	return nextLabel++;
+}
+
+void getFieldVal(int reg1, struct tnode *t){
+	fprintf(fp, "ADD R%d,%d\n",reg1, FLookup(TLookup(t->NAME), t->Ptr1->NAME)->fieldIndex);
+	if(t->Ptr1!=NULL){
+		fprintf(fp, "MOV R%d,[R%d]\n",reg1,reg1);
+		getFieldVal(reg1, t->Ptr1);
+	}
 }
 
 void codeGenStart(struct tnode *t, char func[]){
@@ -72,11 +81,11 @@ void funcDecl(){
 }
 
 void funcRet(){
-	fprintf(fp, "MINUS SP, %d\n", Glookup(func_name)->size + 1); //pop space for local variables
-	freeReg();
-	fprintf(fp, "POP BP\n");
-	if (strcmp(func_name, "MAIN") != 0)
+	if (strcmp(func_name, "MAIN") != 0){
+		fprintf(fp, "SUB SP, %d\n", Glookup(func_name)->size + 1); //pop space for local variables
+		fprintf(fp, "POP BP\n");
 		fprintf(fp, "RET\n");
+	}
 	else{
 		fprintf(fp, "INT 10\n");
 		fclose(fp);
@@ -85,7 +94,7 @@ void funcRet(){
 
 
 int codeGen(struct tnode* t){
-	int l1, l2, r1, r2, r3;
+	int l1, l2, r1, r2, r3, treg;
 	if (t == NULL){
 		printf("NULL\n");
 		return 0;
@@ -106,7 +115,7 @@ int codeGen(struct tnode* t){
 		case MINUS:
 			r1 = codeGen(t->Ptr1);
 			r2 = codeGen(t->Ptr2);
-			fprintf(fp, "MINUS R%d, R%d\n", r1, r2);
+			fprintf(fp, "SUB R%d, R%d\n", r1, r2);
 			freeReg();
 			return r1;
 			break;
@@ -185,18 +194,23 @@ int codeGen(struct tnode* t){
 			return r1;
 			break;
 		case ASGN:
-			r1 = codeGen(t->Ptr2);
-			if (LLookup(t->NAME) != NULL){
-				r2 = getReg();
-				fprintf(fp, "MOV R%d, BP\n", r2);
-				fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->NAME)->binding);
-				fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+			if (t->NAME != NULL){	//ID
+				r1 = codeGen(t->Ptr2);
+				if (LLookup(t->NAME) != NULL){
+					r2 = getReg();
+					fprintf(fp, "MOV R%d, BP\n", r2);
+					fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->NAME)->binding);
+					fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+					freeReg();
+				}
+				else{
+					fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
+				}
 				freeReg();
 			}
-			else{
-				fprintf(fp, "MOV [%d], R%d\n", Glookup(t->NAME)->binding, r1);
+			else{		//FIELD
+
 			}
-			freeReg();
 			return 0;
 			break;
 		case STMT:
@@ -213,7 +227,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "MOV R%d,-2\n", r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "MOV R%d,SP\n",r1 );
-			fprintf(fp, "MINUS R%d,2\n",r1 );
+			fprintf(fp, "SUB R%d,2\n",r1 );
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
@@ -234,12 +248,22 @@ int codeGen(struct tnode* t){
 			if (LLookup(t->NAME) != NULL){
 				r1 = getReg();
 				fprintf(fp, "MOV R%d, BP\n",r1);
-				fprintf(fp, "ADD R%d, %d\n", r1, LLookup(t->NAME)->binding);
+				if (t->NAME != NULL)
+					fprintf(fp, "ADD R%d, %d\n", r1, LLookup(t->NAME)->binding);
+				else
+					fprintf(fp, "ADD R%d,%d\n", r1, LLookup(t->Ptr1->NAME)->binding);
 				fprintf(fp, "ADD R%d,R%d\n", r2, r1);
 				freeReg();
 			}
 			else{
-				fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
+				if (t->NAME != NULL)
+					fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->NAME)->binding);
+				else
+					fprintf(fp, "ADD R%d,%d\n",r2,Glookup(t->Ptr1->NAME)->binding);
+			}
+			if (t->NAME == NULL){
+				fprintf(fp, "MOV R%d,[R%d]\n", r2, r2);
+				getFieldVal(r2, t->Ptr1);
 			}
 			r1 = getReg();
 			for(r1=0;r1<nextFreeReg;r1++)		//push all registers in use
@@ -373,7 +397,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "CALL F%d\n", Glookup(t->NAME)->flabel);
 			r2 = getReg();
 			fprintf(fp, "POP R%d\n", r2);	// return value
-			fprintf(fp, "MINUS SP, %d\n", r3);	//pop space for arguments
+			fprintf(fp, "SUB SP, %d\n", r3);	//pop space for arguments
 			for(r1=nextFreeReg-2; r1>=0; r1--){
 				fprintf(fp, "POP R%d\n", r1);
 			}
@@ -383,7 +407,7 @@ int codeGen(struct tnode* t){
 			r2 = getReg();
 			r1 = codeGen(t->Ptr1);
 			fprintf(fp, "MOV R%d, BP\n", r2);
-			fprintf(fp, "MINUS R%d, 2\n", r2);
+			fprintf(fp, "SUB R%d, 2\n", r2);
 			fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
 			funcRet();
 			freeReg();
@@ -392,7 +416,75 @@ int codeGen(struct tnode* t){
 		case BRKP:
 			fprintf(fp, "BRKP\n");
 			break;
-
+		case FIELD:
+			r1 = getReg();
+			getFieldVal(r1, t->Ptr1);
+			return r1;
+			break;
+		case INIT:
+			treg=0;
+			for(treg=0;treg<nextFreeReg;treg++)
+				fprintf(fp, "PUSH R%d\n",treg);
+			fprintf(fp, "MOV R0,-1\n" );
+			fprintf(fp, "MOV [BP],R0\n" );
+			fprintf(fp, "ADD SP,5\n" );
+			fprintf(fp, "CALL 0\n" );
+			fprintf(fp, "SUB SP,5\n" );
+			for(treg=nextFreeReg-1;treg>=0;treg--)
+				fprintf(fp, "POP R%d\n",treg);
+			return 1;
+			break;
+		case ALLOC:
+			treg=0;
+			for(treg=0;treg<nextFreeReg;treg++)
+				fprintf(fp, "PUSH R%d\n",treg);
+			r1 = getReg();
+			fprintf(fp, "MOV R%d,-2\n",r1);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "MOV R%d,8\n",r1);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "ADD SP,3\n");
+			fprintf(fp, "CALL 0\n" );
+			fprintf(fp, "POP R%d\n",r1 );
+			fprintf(fp, "SUB SP,4\n" );
+			for(treg=nextFreeReg-2;treg>=0;treg--)
+				fprintf(fp, "POP R%d\n",treg);
+			return r1;
+			break;
+		case FREE:
+			treg=0;
+			for(treg=0;treg<nextFreeReg;treg++)
+				fprintf(fp, "PUSH R%d\n",treg);
+			if (LLookup(t->NAME) != NULL){
+				r1 = getReg();
+				r2 = getReg();
+				fprintf(fp, "MOV R%d, BP\n",r2);
+				fprintf(fp, "ADD R%d, %d\n",r2,  LLookup(t->NAME)->binding);
+				fprintf(fp, "MOV R%d, [R%d]\n", r1, r2);
+				freeReg();
+			}
+			else {
+				r1 = getReg();
+				fprintf(fp, "MOV R%d, [%d]\n", r1, Glookup(t->NAME)->binding);
+			}
+			r2 = getReg();
+			fprintf(fp, "MOV R%d,-3\n",r2);
+			fprintf(fp, "PUSH R%d\n",r2);
+			fprintf(fp, "PUSH R%d\n",r1);
+			fprintf(fp, "ADD SP,3\n");
+			fprintf(fp, "CALL 0\n" );
+			fprintf(fp, "SUB SP,5\n" );
+			freeReg();
+			freeReg();
+			for(treg=nextFreeReg-1;treg>=0;treg--)
+				fprintf(fp, "POP R%d\n",treg);
+			return 1;
+			break;
+		case TNULL:
+			r1 = getReg();
+			fprintf(fp, "MOV R%d,-9999 \n",r1 );
+			return r1;
+			break;
 		default:
 			printf("Something unexpected happenned: %d\n", t->NODETYPE);
 			exit(-1);

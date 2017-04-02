@@ -1,0 +1,38 @@
+decl
+    int result, add(int a, int b, int c), double(int c, int d);
+enddecl
+
+
+int double(int c, int d){
+    decl
+    enddecl
+    begin
+        write((c+d)*2);
+        return (c+d)*2;
+    end
+}
+
+int add(int a, int b, int c){
+    decl
+        int f;
+    enddecl
+    begin
+        write(a+b+c);
+        return a+b+c;
+    end
+}
+
+
+int main(){
+    decl
+        int a, b;
+    enddecl
+    begin
+        read(a);
+        read(b);
+        result = add(a, add(1,2,3), b);
+        write(result);
+        breakpoint;
+        return 0;
+    end
+}

@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "typetable.h"
 
 struct Typetable *ttable; // this is the current type table that is
@@ -19,7 +22,7 @@ void TypeTableCreate(){
   ttable -> size = 1;
   ttable -> fields = NULL;
   ttable -> next = NULL;
-  VAR_TYPE_BOOL = ttable;
+  VAR_TYPE_INT = ttable;
 
   // add integer
   struct Typetable *new_ttable = (struct Typetable *) malloc(sizeof(struct Typetable));
@@ -29,10 +32,10 @@ void TypeTableCreate(){
   new_ttable -> fields = NULL;
   new_ttable -> next = ttable;
   ttable = new_ttable;
-  VAR_TYPE_INT = ttable;
+  VAR_TYPE_BOOL = ttable;
 
   //add intarr
-  struct Typetable *new_ttable = (struct Typetable *) malloc(sizeof(struct Typetable));
+  new_ttable = (struct Typetable *) malloc(sizeof(struct Typetable));
   new_ttable -> name = (char *) malloc(sizeof(char) * 20);
   strcpy(new_ttable -> name, "INTARR");
   ttable -> size = 1;
@@ -42,7 +45,7 @@ void TypeTableCreate(){
   VAR_TYPE_INTARR = ttable;
 
   //add boolarr
-  struct Typetable *new_ttable = (struct Typetable *) malloc(sizeof(struct Typetable));
+  new_ttable = (struct Typetable *) malloc(sizeof(struct Typetable));
   new_ttable -> name = (char *) malloc(sizeof(char) * 20);
   strcpy(new_ttable -> name, "BOOLARR");
   ttable -> size = 1;
@@ -104,7 +107,7 @@ struct Fieldlist *Finstall(char* Typename, char* name) {
   strcpy(temp -> name, name);
   temp->next=NULL;
   temp->fieldIndex=1;
-  struct Fieldlist *t = TLookup(Typename);
+  struct Typetable *t = TLookup(Typename);
   if(t == NULL){
     printf("Field type is undefined\n");
     exit(-1);
@@ -113,8 +116,8 @@ struct Fieldlist *Finstall(char* Typename, char* name) {
   return temp;
 }
 
-struct fieldlist* insertField(struct fieldlist *fld1, struct fieldlist *fld2){
-  struct fieldlist* temp = fld1;
+struct Fieldlist* insertField(struct Fieldlist *fld1, struct Fieldlist *fld2){
+  struct Fieldlist* temp = fld1;
   while(temp != NULL){
     if(strcmp(temp->name,fld2->name)==0){
       printf("Field already declared\n");
@@ -127,10 +130,10 @@ struct fieldlist* insertField(struct fieldlist *fld1, struct fieldlist *fld2){
   return fld2;
 }
 
-int GetSize (typetable * type){
+int GetSize (struct Typetable * type){
   return type->size;
 }
 
-int findSize(fieldlist *fld){
+int findSize(struct Fieldlist *fld){
   return fld->fieldIndex;
 }

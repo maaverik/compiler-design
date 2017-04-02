@@ -33,8 +33,8 @@
 "continue" {return CONTINUE;}
 "int" 	{return INT;}
 "bool"	{return BOOL;}
-"true" 	{yylval = TreeCreate(BOOL, BOOL, TRUE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
-"false"	{yylval = TreeCreate(BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
+"true" 	{yylval = TreeCreate(VAR_TYPE_BOOL, BOOL, TRUE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
+"false"	{yylval = TreeCreate(VAR_TYPE_BOOL, BOOL, FALSE, NULL, NULL, NULL, NULL, NULL); return BOOL;}
 "decl" 	{return DECL;}
 "enddecl" {return ENDDECL;}
 "main" {return MAIN;}
@@ -42,9 +42,10 @@
 "breakpoint" {return BRKP;}
 "Initialize" {return INIT;}
 "alloc"	{return ALLOC;}
-"dealloc" {return DEALLOC;}
-"type" 	{return TYPE;}
+"free" {return FREE;}
+"type" 	{return TYP;}
 "endtype" {return ENDTYPE;}
+"null"	{return TNULL;}
 
 [=]     {return ASGN;}
 [+]		{return PLUS;}
@@ -64,9 +65,12 @@
 [a-zA-Z_][a-zA-Z_0-9]*   { char *temp=malloc(sizeof(char)*(strlen(yytext)+1));
 	strcpy(temp, yytext);
 	yylval = TreeCreate(VAR_TYPE_VOID, ID, -1, temp, NULL, NULL, NULL, NULL);
-	return ID;}
-[0-9]+  { yylval = TreeCreate(VAR_TYPE_INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;}
+	return ID;
+	}
+[0-9]+  { yylval = TreeCreate(VAR_TYPE_INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;
+	}
 "&&"	{return AND;}
 "||"	{return OR;}
+"!"		{return NOT;}
 
 %%

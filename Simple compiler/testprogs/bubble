@@ -1,0 +1,70 @@
+decl
+	int ar[100], readarr(int tmp), writearr(int temp);
+	bool b;
+enddecl
+
+int readarr(int tmp)
+{
+  decl
+    int count;
+  enddecl
+
+  begin
+    count=0;
+    while(count < tmp) do
+      read(ar[count]);
+      count=count+1;
+    endwhile;
+    return count;
+  end
+}
+
+int writearr(int temp)
+{
+  decl
+    int count;
+  enddecl
+
+  begin
+  	count = 0;
+    while(count < temp) do
+      write(ar[count]);
+      count = count+1;
+    endwhile;
+
+    return count;
+  end
+}
+
+int main() {
+decl
+	int n, i, j, x, temp, count;
+enddecl
+begin
+	write(1111);
+	read(n);
+	write(2222);
+	readarr(n);
+	write(3333);
+	i=0;
+	j=1;
+	while(i<n) do
+		j=i+1;
+		while(j<n) do
+			if(ar[i]>ar[j]) then
+				temp=ar[i];
+				ar[i]=ar[j];
+				ar[j]=temp;
+			else
+				temp=ar[i];
+			endif;
+			j=j+1;
+		endwhile;
+		i=i+1;
+	endwhile;
+	write(4444);
+	writearr(n);
+	write(5555);
+	return 0;
+end
+}

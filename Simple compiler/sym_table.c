@@ -1,6 +1,7 @@
 #include "y.tab.h"
 #include "sym_table.h"
 #include "lsym_table.h"
+#include "typetable.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +20,7 @@ struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	return NULL;
 }
 
-void Ginstall(char* name, int type, int size, struct Paramstruct *paramlist) {
+void Ginstall(char* name, struct Typetable *type, int size, struct Paramstruct *paramlist) {
  	struct Gsymbol *i;
 
  	if (GST == NULL) {
@@ -49,10 +50,6 @@ void Ginstall(char* name, int type, int size, struct Paramstruct *paramlist) {
 	 	i->flabel = -1;
  	}
 
- 	else if(type == INT || type == BOOL || type == INTARR || type == BOOLARR){		// integer
- 		i->binding = nextFreeLocation;
- 		nextFreeLocation += size;
- 	}
- 	else
- 		printf("Wrong type\n");
+ 	i->binding = nextFreeLocation;
+ 	nextFreeLocation += size;
 }

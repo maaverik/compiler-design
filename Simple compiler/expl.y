@@ -25,7 +25,7 @@
 
 %}
 
-%token ID READ ASGN NEWLINE WRITE PLUS MUL MINUS DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR NOT LE GE BRKP INIT ALLOC DEALLOC TYPE ENDTYPE
+%token ID READ ASGN NEWLINE WRITE PLUS MUL MINUS DIV EVAL IF THEN ELSE WHILE DO ENDWHILE ENDIF LT GT EQ NEQ STMT BREAK CONTINUE BEG END DECL ENDDECL INT BOOL MAIN RET ARGS AND OR NOT LE GE BRKP INIT ALLOC FREE TYP ENDTYPE TNULL
 %nonassoc GT LT EQ NEQ LE GE
 %left PLUS MINUS MUL DIV AND OR NOT
 
@@ -33,12 +33,12 @@
 %%
 
 Program : TypeInit TypeDefBlock GDefblock FdefList Mainblock {}
-	| TypeDefBlock GDefblock Mainblock {}
+	| TypeInit TypeDefBlock GDefblock Mainblock {}
      ;
 
-TypeInit : {TypeTableCreate();}
-
-TypeDefBlock  : TYPE TypeDefList ENDTYPE {}
+TypeInit : %empty {TypeTableCreate();}
+	;
+TypeDefBlock  : TYP TypeDefList ENDTYPE {}
               | %empty {}
               ;
 
@@ -47,21 +47,21 @@ TypeDefList   : TypeDefList TypeDef {}
               ;
 
 TypeDef       : TypeDefHead '{' FieldDeclList '}'   {
-				int size = findSize($3); TInstall($1->name,size,$3);
+				int size = findSize((struct Fieldlist*)$3); TInstall($1->NAME,size,(struct Fieldlist*)$3);
 				}
               ;
 
-TypeDefHead : ID { TInstallId($1->name); $$ = $1;}
+TypeDefHead : ID { TInstallId($1->NAME); $$ = $1;}
 
-FieldDeclList : FieldDeclList FieldDecl {$$ = $2; insertField($1,$2);}
-              | FieldDecl {$$ = $1;}
+FieldDeclList : FieldDeclList FieldDecl {$$ = (struct tnode *)$2; insertField((struct Fieldlist*)$1,(struct Fieldlist*)$2);}
+              | FieldDecl {$$ = (struct tnode *)$1;}
               ;
 
-FieldDecl    : TypeName ID ';' {$$ = Finstall($1, $2->name);}
+FieldDecl    : TypeName ID ';' {$$ = (struct tnode *)Finstall((char *)$1, $2->NAME);}
 
-TypeName :  INT {$$ = strdup("INT");}
-			| BOOL {$$ = strdup("BOOL");}
-			| ID {$$ = $1->name;}
+TypeName :  INT {$$ = (struct tnode *)strdup("INT");}
+			| BOOL {$$ = (struct tnode *)strdup("BOOL");}
+			| ID {$$ = (struct tnode *)$1->NAME;}
 			;
 
 
@@ -78,7 +78,7 @@ decl : type varlist ';' {}
 
 type :  INT { var_type = TLookup(strdup("INT"));}
 	 | BOOL { var_type = TLookup(strdup("BOOL"));}
-	 | ID { var_type = TLookup($1->name);}
+	 | ID { var_type = TLookup($1->NAME);}
 	 ;
 
 varlist : varlist ',' var {}
@@ -89,7 +89,7 @@ var : ID '[' INT ']' {
 			printf("Already declared\n");
 			exit(-1);
 		}
-		if ($3->TYPE != INT) {
+		if ($3->TYPE != VAR_TYPE_INT) {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
@@ -254,14 +254,14 @@ Body : BEG slist RetStmt END {
 	;
 
 slist : slist stmt {
-		if($1->TYPE != -1 || $2->TYPE != -1){
+		if($1->TYPE != VAR_TYPE_VOID || $2->TYPE != VAR_TYPE_VOID){
 			printf("Type error\n");
 			exit(-1);
 		}
 		$$ = TreeCreate(VAR_TYPE_VOID, STMT, -1, NULL, NULL, $1, $2, NULL);
 	}
     | stmt {
-     	if($1->TYPE != -1){
+     	if($1->TYPE != VAR_TYPE_VOID){
      		printf("Type error\n");
 			exit(-1);
      	}
@@ -298,7 +298,7 @@ stmt: 	ID ASGN expr ';' {
 				printf("Unallocated variable '%s' in readarr\n", $3->NAME);
 				exit(0);
 			}
-			if($5->TYPE != INT) {
+			if($5->TYPE != VAR_TYPE_INT) {
 				printf("type error: ARRREAD[expr]");
 				exit(0);
 			}
@@ -314,7 +314,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| IF '(' expr ')' THEN slist ELSE slist ENDIF ';' {
-			if($3->TYPE != BOOL){
+			if($3->TYPE != VAR_TYPE_BOOL){
 				printf("type error: IF\n");
 				exit(0);
 			}
@@ -330,7 +330,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| IF '(' expr ')' THEN slist ENDIF ';' {
-			if($3->TYPE != BOOL){
+			if($3->TYPE != VAR_TYPE_BOOL){
 				printf("type error: IF\n");
 				exit(0);
 			}
@@ -342,7 +342,7 @@ stmt: 	ID ASGN expr ';' {
 		}
 
 		| WHILE '(' expr ')' DO slist ENDWHILE ';' {
-			if($3->TYPE != BOOL){
+			if($3->TYPE != VAR_TYPE_BOOL){
 				printf("type error: WHILE\n");
 				exit(0);
 			}
@@ -392,12 +392,43 @@ stmt: 	ID ASGN expr ';' {
  			$$ = TreeCreate(VAR_TYPE_VOID, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
  		| BRKP ';' {$$ = TreeCreate(VAR_TYPE_VOID, BRKP, -1, NULL, NULL, NULL, NULL, NULL);}
-		| INIT '(' ')' {}
-		| ID ASGN ALLOC '(' ')' {}
-		| FIELD ASGN ALLOC '(' ')' {}
-		| DEALLOC '(' ID ')' {}
-		| DEALLOC '(' FIELD ')' {}
-		| READ '(' FIELD ')' {}
+		| INIT '(' ')' {$$ = TreeCreate(VAR_TYPE_VOID, INIT, -1, NULL, NULL, NULL, NULL, NULL);}
+		| ID ASGN ALLOC '(' ')' {
+			if ($1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type\n");
+				exit(-1);
+			}
+			$3 = TreeCreate(VAR_TYPE_VOID, ALLOC, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
+		}
+		| field ASGN ALLOC '(' ')' {
+			$3 = TreeCreate(VAR_TYPE_VOID, ALLOC, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
+		}
+		| field ASGN expr {
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
+		}
+		| FREE '(' ID ')' {
+			if ($3->TYPE == VAR_TYPE_BOOL || $3->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type pointer\n");
+				exit(-1);
+			}
+			$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);
+		}
+		| FREE '(' field ')' {$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);}
+		| READ '(' field ')' {TreeCreate(VAR_TYPE_VOID, READ, -1, NULL, NULL, $3, NULL, NULL);}
+		| ID ASGN TNULL{
+			if ($1->TYPE == VAR_TYPE_INT || $1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_VOID || $1->TYPE == VAR_TYPE_BOOLARR || $1->TYPE == VAR_TYPE_INTARR){
+				printf("Type error: null");
+				exit(-1);
+			}
+			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
+		}
+		| field ASGN TNULL {
+			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
+		}
 		;
 
 
@@ -459,7 +490,7 @@ expr: expr PLUS expr {
 	 	$$ = $1;
 	 }
 	 | ID '[' expr ']'	{
-	 	if($3->TYPE != INT){
+	 	if($3->TYPE != VAR_TYPE_INT){
 	 		printf("type error: []\n");
 			exit(0);
 	 	}
@@ -533,11 +564,11 @@ expr: expr PLUS expr {
 		 $$ = makeOperatorNode(OR, VAR_TYPE_BOOL, $1, $3);
 	 }
 	 | NOT expr {
-	 	if($3->TYPE != VAR_TYPE_BOOL){
+	 	if($1->TYPE != VAR_TYPE_BOOL){
 			printf("type error: ||\n");
 			exit(0);
 		}
-		 $$ = makeOperatorNode(OR, VAR_TYPE_BOOL, $1, $3);
+		 $$ = makeOperatorNode(NOT, VAR_TYPE_BOOL, $1, NULL);
 	 }
 	 | ID '(' Args ')' {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
@@ -560,15 +591,23 @@ expr: expr PLUS expr {
  			}
  			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
- 	 | FIELD {}
-	 ;
+ 		| field {$$ = TreeCreate(NULL, FIELD, -1, NULL, NULL, $1, NULL, NULL);}
+ 		| expr EQ TNULL {
+ 			$3 = TreeCreate(NULL, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
+		 	$$ = makeOperatorNode(EQ, VAR_TYPE_BOOL, $1, $3);
+	    }
+	   | expr NEQ TNULL {
+		 	$3 = TreeCreate(NULL, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
+			$$ = makeOperatorNode(EQ, VAR_TYPE_BOOL, $1, $3);
+	    }
+ 		;
 
-FIELD     : ID '.' ID { $$->type = $3->type; }
-          | FIELD '.' ID { $$->type = $3->type; }
-          ;
+field : ID '.' ID {$$ = $1; $1->Ptr1 = $3; }
+	  | ID '.' field {$$ = $1; $1->Ptr1 = $3;}
+	  ;
 
 RetStmt : RET expr ';'{ $$ = TreeCreate($2->TYPE, RET, -1, NULL, NULL, $2, NULL, NULL); }
-	;
+		;
 
 %%
 

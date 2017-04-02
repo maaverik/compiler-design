@@ -7,6 +7,7 @@
 #define ARRREAD 5007
 #define FUNCCALL 5008
 #define ARG 5009
+#define FIELD 5010
 
 struct Gsymbol{
 	char *name;               //name of the variable or function

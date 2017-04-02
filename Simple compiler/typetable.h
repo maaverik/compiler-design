@@ -20,10 +20,12 @@ struct Typetable* TInstall(char *name,int size, struct Fieldlist *fields); // Cr
 
 struct Fieldlist* FLookup(struct Typetable *type, char *name); // Searches for a field of given 'name' in the 'fieldlist' of the given user-defined type and returns a pointer to the field entry. Returns NULL if the type does not have a field of the name.
 
-sstruct Fieldlist *Finstall(char* Typename, char* name); // Install a field of 'type' and 'name'
+struct Fieldlist *Finstall(char* Typename, char* name); // create a field of 'type' and 'name'
 
-int GetSize (Typetable * type); // Returns the amount of memory words required to store a variable of the given type.
+int GetSize (struct Typetable * type); // Returns the amount of memory words required to store a variable of the given type.
 
-struct fieldlist* insertField(struct fieldlist *fld1, struct fieldlist *fld2);
+struct Fieldlist* insertField(struct Fieldlist *fld1, struct Fieldlist *fld2);
 
-int findSize(fieldlist *fld);
+void TInstallId(char *name);
+
+int findSize(struct Fieldlist *fld);

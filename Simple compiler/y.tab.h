@@ -52,7 +52,7 @@ extern int yydebug;
     WRITE = 262,
     PLUS = 263,
     MUL = 264,
-    SUB = 265,
+    MINUS = 265,
     DIV = 266,
     EVAL = 267,
     IF = 268,
@@ -80,9 +80,16 @@ extern int yydebug;
     ARGS = 290,
     AND = 291,
     OR = 292,
-    LE = 293,
-    GE = 294,
-    BRKP = 295
+    NOT = 293,
+    LE = 294,
+    GE = 295,
+    BRKP = 296,
+    INIT = 297,
+    ALLOC = 298,
+    FREE = 299,
+    TYP = 300,
+    ENDTYPE = 301,
+    TNULL = 302
   };
 #endif
 /* Tokens.  */
@@ -93,7 +100,7 @@ extern int yydebug;
 #define WRITE 262
 #define PLUS 263
 #define MUL 264
-#define SUB 265
+#define MINUS 265
 #define DIV 266
 #define EVAL 267
 #define IF 268
@@ -121,9 +128,16 @@ extern int yydebug;
 #define ARGS 290
 #define AND 291
 #define OR 292
-#define LE 293
-#define GE 294
-#define BRKP 295
+#define NOT 293
+#define LE 294
+#define GE 295
+#define BRKP 296
+#define INIT 297
+#define ALLOC 298
+#define FREE 299
+#define TYP 300
+#define ENDTYPE 301
+#define TNULL 302
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
