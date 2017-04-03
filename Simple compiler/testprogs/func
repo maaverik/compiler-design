@@ -4,7 +4,7 @@ enddecl
 
 int fun(int x)
 {
- begin
+begin
   if(x >= 91) then
    a = 91;
   else
@@ -12,7 +12,7 @@ int fun(int x)
   endif;
 
   return a;
- end
+end
 }
 
 int main()

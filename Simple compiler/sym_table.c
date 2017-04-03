@@ -49,7 +49,8 @@ void Ginstall(char* name, struct Typetable *type, int size, struct Paramstruct *
 	 	i->binding = -1;
 	 	i->flabel = -1;
  	}
-
- 	i->binding = nextFreeLocation;
- 	nextFreeLocation += size;
+ 	else{
+	 	i->binding = nextFreeLocation;
+	 	nextFreeLocation += size;
+	 }
 }

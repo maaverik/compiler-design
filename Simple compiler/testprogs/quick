@@ -92,8 +92,6 @@ int quicksort (int low , int high)
   enddecl
 
   begin
-
-    write(1111);
     if (low < high) then
       pp = partition (low , high);
       temp = quicksort(pp+1,high);

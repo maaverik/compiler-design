@@ -22,6 +22,7 @@
 	extern struct Typetable *VAR_TYPE_BOOLARR;
 	extern struct Typetable *VAR_TYPE_BOOL;
 	extern struct Typetable *VAR_TYPE_VOID;
+	extern struct Typetable *ttable;
 
 %}
 
@@ -38,7 +39,16 @@ Program : TypeInit TypeDefBlock GDefblock FdefList Mainblock {}
 
 TypeInit : %empty {TypeTableCreate();}
 	;
-TypeDefBlock  : TYP TypeDefList ENDTYPE {}
+TypeDefBlock  : TYP TypeDefList ENDTYPE {
+			printf("Types defined:::\n");
+			struct Typetable *t;
+			t = ttable;
+			while (t != NULL){
+				printf("%s\n", t->name);
+				t = t->next;
+			}
+			printf("\n");
+		}
               | %empty {}
               ;
 
@@ -93,10 +103,14 @@ var : ID '[' INT ']' {
 			printf("Type error in int array declaration.\n");
 			exit(-1);
 		}
-		if (var_type == VAR_TYPE_INT)
+		if (var_type == VAR_TYPE_INT){
 			Ginstall($1->NAME, VAR_TYPE_INTARR, 1*$3->VALUE, NULL);
-		else
+			$1->TYPE = VAR_TYPE_INTARR;
+		}
+		else{
 			Ginstall($1->NAME, VAR_TYPE_BOOLARR, 1*$3->VALUE, NULL);
+			$1->TYPE = VAR_TYPE_BOOLARR;
+		}
 	}
 	| ID {
 		if (Glookup($1->NAME) != NULL){
@@ -104,6 +118,8 @@ var : ID '[' INT ']' {
 			exit(-1);
 		}
 		Ginstall($1->NAME, var_type, 1, NULL);
+		$1->TYPE = var_type;
+		printf("VAR ::: %s : %s\n", $1->NAME, $1->TYPE->name);
 	}
 	| ID '(' arglist ')' {
 		if (Glookup($1->NAME) != NULL){
@@ -111,6 +127,8 @@ var : ID '[' INT ']' {
 			exit(-1);
 		}
 		Ginstall($1->NAME, var_type, -1, (struct Paramstruct*)$3);
+		$1->TYPE = var_type;
+		printf("Func %s : %s\n", $1->NAME, $1->TYPE->name);
 	}
 	;
 
@@ -204,7 +222,7 @@ arg : type ID {
 	;
 
 LDefBlock : DECL LDefList ENDDECL 	{}
-	| DECL ENDDECL				{}
+	| %empty				{}
 	;
 
 LDefList :  LDefList LDecl {}
@@ -224,6 +242,14 @@ LId : ID {
 			exit(-1);
 		}
 		Linstall($1->NAME,var_type,1);
+		$1->TYPE = var_type;
+		printf("Local Decl Field:\n");
+		struct Fieldlist *f = $1->TYPE->fields;
+		while(f != NULL){
+			printf("%s : %s\n", f->name, f->type->name);
+			f = f->next;
+		}
+		printf("Done\n");
 	}
 	;
 
@@ -278,7 +304,8 @@ stmt: 	ID ASGN expr ';' {
 				printf("Cannot assign to function '%s'\n", $1->NAME);
 				exit(0);
 			}
-			if(LLookup($1->NAME) == NULL && Glookup($1->NAME)->type != $3->TYPE){
+			if($1->TYPE != $3->TYPE){
+				printf("%s %s\n", Glookup($1->NAME)->type->name, $3->TYPE->name);
 				printf("type error: =\n");
 				exit(0);
 			}
@@ -392,47 +419,48 @@ stmt: 	ID ASGN expr ';' {
  			$$ = TreeCreate(VAR_TYPE_VOID, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
  		| BRKP ';' {$$ = TreeCreate(VAR_TYPE_VOID, BRKP, -1, NULL, NULL, NULL, NULL, NULL);}
-		| INIT '(' ')' {$$ = TreeCreate(VAR_TYPE_VOID, INIT, -1, NULL, NULL, NULL, NULL, NULL);}
-		| ID ASGN ALLOC '(' ')' {
+		| INIT '(' ')' ';' {$$ = TreeCreate(VAR_TYPE_VOID, INIT, -1, NULL, NULL, NULL, NULL, NULL);}
+		| ID ASGN ALLOC '(' ')' ';' {
 			if ($1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_INT){
 				printf("Not a user defined type\n");
 				exit(-1);
 			}
+			struct Lsymbol *temp;
 			$3 = TreeCreate(VAR_TYPE_VOID, ALLOC, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
-		| field ASGN ALLOC '(' ')' {
+		| field ASGN ALLOC '(' ')' ';' {
 			$3 = TreeCreate(VAR_TYPE_VOID, ALLOC, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
 		}
-		| field ASGN expr {
+		| field ASGN expr ';' {
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
 		}
-		| FREE '(' ID ')' {
+		| FREE '(' ID ')' ';' {
 			if ($3->TYPE == VAR_TYPE_BOOL || $3->TYPE == VAR_TYPE_INT){
 				printf("Not a user defined type pointer\n");
 				exit(-1);
 			}
 			$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);
 		}
-		| FREE '(' field ')' {$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);}
-		| READ '(' field ')' {TreeCreate(VAR_TYPE_VOID, READ, -1, NULL, NULL, $3, NULL, NULL);}
-		| ID ASGN TNULL{
-			if ($1->TYPE == VAR_TYPE_INT || $1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_VOID || $1->TYPE == VAR_TYPE_BOOLARR || $1->TYPE == VAR_TYPE_INTARR){
-				printf("Type error: null");
+		| FREE '(' field ')' ';' {$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);}
+		| READ '(' field ')' ';' {TreeCreate(VAR_TYPE_VOID, READ, -1, NULL, NULL, $3, NULL, NULL);}
+		| ID ASGN TNULL ';' {
+			if (Glookup($1->NAME)->type == VAR_TYPE_INT || Glookup($1->NAME)->type == VAR_TYPE_BOOL || Glookup($1->NAME)->type == VAR_TYPE_VOID || Glookup($1->NAME)->type == VAR_TYPE_BOOLARR || Glookup($1->NAME)->type == VAR_TYPE_INTARR){
+				printf("Type error: null\n");
 				exit(-1);
 			}
 			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
-			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
+			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
-		| field ASGN TNULL {
+		| field ASGN TNULL ';' {
 			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
 		}
 		;
 
 
-Args: Args ',' expr {$$ = TreeCreate($3->TYPE, ARGS, -1, NULL, $1, $3, NULL, NULL);}
+Args: expr ',' Args {$$ = TreeCreate($1->TYPE, ARGS, -1, NULL, $3, $1, NULL, NULL);}
 	| expr { $$ = TreeCreate($1->TYPE, ARGS, -1, NULL, NULL, $1, NULL, NULL);}
 	| %empty {$$ = NULL;}
 	;
@@ -479,11 +507,7 @@ expr: expr PLUS expr {
 	 | INT {$$ = $1;}
 	 | BOOL {$$ = $1;}
 	 | ID {
-	  	if (LLookup($1->NAME) != NULL)
-	 		$1->TYPE = LLookup($1->NAME)->type;
-	 	else if (Glookup($1->NAME) != NULL)
-	 		$1->TYPE = Glookup($1->NAME)->type;
-	 	else{
+	  	if (LLookup($1->NAME) == NULL && Glookup($1->NAME) == NULL){
 	 		printf("Undeclared variable %s\n", $1->NAME);
 	 		exit(-1);
 	 	}
@@ -574,6 +598,8 @@ expr: expr PLUS expr {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
 			struct tnode *t = $3;
 			while (t != NULL && p != NULL){
+				printf("%s, %s\n", p->type->name, t->TYPE->name);
+				printf("%s, %s\n", p->name, t->NAME);
 				if (t->TYPE != p->type){
 					printf("Argument types don't match 3\n");
 					exit(0);
@@ -591,7 +617,20 @@ expr: expr PLUS expr {
  			}
  			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
- 		| field {$$ = TreeCreate(NULL, FIELD, -1, NULL, NULL, $1, NULL, NULL);}
+ 		| field {
+ 			struct tnode *tmp = $1;
+ 			while(tmp != NULL){
+ 				printf("Field:::\n");
+ 				if (tmp->TYPE == NULL){
+ 					printf("%s null\n", tmp->NAME);
+ 				}
+ 				else{
+ 					printf("%s : %s\n", tmp->NAME, tmp->TYPE->name);
+ 				}
+ 				tmp = tmp->Ptr1;
+ 			}
+ 			$$ = TreeCreate(findFinalType($1->TYPE, $1->Ptr1), FIELD, -1, NULL, NULL, $1, NULL, NULL);
+ 		}
  		| expr EQ TNULL {
  			$3 = TreeCreate(NULL, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
 		 	$$ = makeOperatorNode(EQ, VAR_TYPE_BOOL, $1, $3);
@@ -602,8 +641,30 @@ expr: expr PLUS expr {
 	    }
  		;
 
-field : ID '.' ID {$$ = $1; $1->Ptr1 = $3; }
-	  | ID '.' field {$$ = $1; $1->Ptr1 = $3;}
+field : ID '.' ID {
+		$$ = $1;
+		$1->Ptr1 = $3;
+		struct Fieldlist *f = $1->TYPE->fields;
+		while(f != NULL){
+			if (strcmp($3->NAME, f->name) == 0){
+				$3->TYPE = f->type;
+				break;
+			}
+			f = f->next;
+		}
+	}
+	  | ID '.' field {
+	  	$$ = $1;
+	  	$1->Ptr1 = $3;
+		struct Fieldlist *f = $1->TYPE->fields;
+	  	while(f != NULL){
+			if (strcmp($3->NAME, f->name) == 0){
+				$3->TYPE = f->type;
+				break;
+			}
+			f = f->next;
+		}
+	}
 	  ;
 
 RetStmt : RET expr ';'{ $$ = TreeCreate($2->TYPE, RET, -1, NULL, NULL, $2, NULL, NULL); }

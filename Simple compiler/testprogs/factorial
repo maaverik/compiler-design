@@ -28,7 +28,6 @@ int main(){
         read(a);
         result = factorial(a);
         write(result);
-        breakpoint;
         return 1;
     end
 }

@@ -40,3 +40,5 @@ struct tnode* makeOperatorNode(int op, struct Typetable *type, struct tnode *l, 
 int evaluate(struct tnode *t);
 
 int toBool(int x);
+
+struct Typetable* findFinalType(struct Typetable* type, struct tnode *t);

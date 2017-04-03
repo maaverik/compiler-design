@@ -91,6 +91,10 @@ struct Typetable* TInstall(char *name,int size, struct Fieldlist *fields){
 }
 
 struct Fieldlist* FLookup(struct Typetable *type, char *name){
+  if (type == NULL){
+    printf("Type NULL\n");
+    exit(-1);
+  }
   struct Fieldlist *fieldlist = type -> fields;
   while (fieldlist != NULL) {
     if (strcmp(fieldlist -> name, name)  == 0) {

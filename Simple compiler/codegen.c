@@ -35,11 +35,22 @@ int getLabel(){
 	return nextLabel++;
 }
 
-void getFieldVal(int reg1, struct tnode *t){
-	fprintf(fp, "ADD R%d,%d\n",reg1, FLookup(TLookup(t->NAME), t->Ptr1->NAME)->fieldIndex);
+int pushargs(int r1, struct tnode *tmp, int count){
+	if (tmp == NULL){
+		return count;
+	}
+	count = pushargs(r1, tmp->Arglist, count+1);
+	r1 = codeGen(tmp->Ptr1);
+	fprintf(fp, "PUSH R%d\n", r1);
+	freeReg();
+	return count;
+}
+
+void getFieldAddr(int reg1, struct tnode *t){
+	fprintf(fp, "ADD R%d,%d\n",reg1, t->VALUE);
 	if(t->Ptr1!=NULL){
 		fprintf(fp, "MOV R%d,[R%d]\n",reg1,reg1);
-		getFieldVal(reg1, t->Ptr1);
+		getFieldAddr(reg1, t->Ptr1);
 	}
 }
 
@@ -76,7 +87,7 @@ void funcDecl(){
 	}
 	fprintf(fp, "PUSH BP\n");
 	fprintf(fp, "MOV BP,SP\n");
-	printf("%s : size = %d\n", func_name, Glookup(func_name)->size);
+	printf("\n%s : size = %d\n\n", func_name, Glookup(func_name)->size);
 	fprintf(fp, "ADD SP, %d\n", Glookup(func_name)->size + 1); // pushing empty space for local variables
 }
 
@@ -209,7 +220,23 @@ int codeGen(struct tnode* t){
 				freeReg();
 			}
 			else{		//FIELD
-
+				r1 = codeGen(t->Ptr2);
+				if (LLookup(t->Ptr1->NAME) != NULL){
+					r2 = getReg();
+					fprintf(fp, "MOV R%d, BP\n", r2);
+					fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->Ptr1->NAME)->binding);
+					fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
+					getFieldAddr(r2, t->Ptr1->Ptr1);
+					fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+					freeReg();
+				}
+				else{
+					fprintf(fp, "MOV R%d, %d\n", r2, Glookup(t->Ptr1->NAME)->binding);
+					fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
+					getFieldAddr(r2, t->Ptr1->Ptr1);
+					fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+				}
+				freeReg();
 			}
 			return 0;
 			break;
@@ -231,7 +258,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "CALL 0\n");
+			fprintf(fp, "INT 7\n");
 			fprintf(fp, "POP R%d\n",r2); //return value
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -263,7 +290,7 @@ int codeGen(struct tnode* t){
 			}
 			if (t->NAME == NULL){
 				fprintf(fp, "MOV R%d,[R%d]\n", r2, r2);
-				getFieldVal(r2, t->Ptr1);
+				getFieldAddr(r2, t->Ptr1->Ptr1);
 			}
 			r1 = getReg();
 			for(r1=0;r1<nextFreeReg;r1++)		//push all registers in use
@@ -275,7 +302,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r2);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "CALL 0\n");
+			fprintf(fp, "INT 6\n");
 			fprintf(fp, "POP R%d\n",r2);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -369,7 +396,7 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r2);
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "PUSH R%d\n",r1);
-			fprintf(fp, "CALL 0\n");
+			fprintf(fp, "INT 6\n");
 			fprintf(fp, "POP R%d\n",r2);
 			fprintf(fp, "POP R%d\n",r1);
 			fprintf(fp, "POP R%d\n",r1);
@@ -385,14 +412,7 @@ int codeGen(struct tnode* t){
 				fprintf(fp, "PUSH R%d\n", r1);
 			}
 			struct tnode *tmp = t->Arglist;
-			r3 = 0;
-			while(tmp != NULL){	//push arguments
-				r1 = codeGen(tmp->Ptr1);
-				fprintf(fp, "PUSH R%d\n", r1);
-				tmp = tmp->Arglist;
-				r3++;
-				freeReg();
-			}
+			r3 = pushargs(r1, tmp, 0);
 			fprintf(fp, "PUSH R%d\n", r1);	// space for return value
 			fprintf(fp, "CALL F%d\n", Glookup(t->NAME)->flabel);
 			r2 = getReg();
@@ -417,8 +437,18 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "BRKP\n");
 			break;
 		case FIELD:
-			r1 = getReg();
-			getFieldVal(r1, t->Ptr1);
+			r2 = getReg();
+			if (LLookup(t->Ptr1->NAME) != NULL){
+				fprintf(fp, "MOV R%d, BP\n", r2);
+				fprintf(fp, "ADD R%d, %d\n", r2, LLookup(t->Ptr1->NAME)->binding);
+				fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
+			}
+			else{
+				fprintf(fp, "MOV R%d, %d\n", r2, Glookup(t->Ptr1->NAME)->binding);
+				fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
+			}
+			getFieldAddr(r1, t->Ptr1->Ptr1);
+			fprintf(fp, "MOV R%d, [R%d]\n", r1, r1);
 			return r1;
 			break;
 		case INIT:
@@ -426,8 +456,8 @@ int codeGen(struct tnode* t){
 			for(treg=0;treg<nextFreeReg;treg++)
 				fprintf(fp, "PUSH R%d\n",treg);
 			fprintf(fp, "MOV R0,-1\n" );
-			fprintf(fp, "MOV [BP],R0\n" );
-			fprintf(fp, "ADD SP,5\n" );
+			fprintf(fp, "PUSH R0\n" );
+			fprintf(fp, "ADD SP,4\n" );
 			fprintf(fp, "CALL 0\n" );
 			fprintf(fp, "SUB SP,5\n" );
 			for(treg=nextFreeReg-1;treg>=0;treg--)

@@ -32,7 +32,6 @@ int main(){
         read(b);
         result = add(a, add(1,2,3), b);
         write(result);
-        breakpoint;
         return 0;
     end
 }

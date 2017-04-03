@@ -2,6 +2,8 @@
 #include "sym_table.h"
 #include "exptree.h"
 #include "codegen.h"
+#include "typetable.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,6 +24,24 @@ struct tnode *TreeCreate(struct Typetable *TYPE, int NODETYPE, int VALUE, char *
 struct tnode* makeOperatorNode(int op, struct Typetable *type, struct tnode *l, struct tnode *r){
 	struct tnode *temp = TreeCreate(type, op, -1, NULL, NULL, l, r, NULL);
 	return temp;
+}
+
+struct Typetable* findFinalType(struct Typetable* type, struct tnode *t){
+	struct Fieldlist* temp=type->fields;
+	while(temp!=NULL){
+		if(strcmp(temp->name,t->NAME)==0)
+			break;
+		temp=temp->next;
+	}
+	if(temp==NULL){
+		printf("%s Field not found %s\n",t->NAME,type->name );
+		exit(-1);
+	}
+	t->VALUE=temp->fieldIndex-1;
+	t->TYPE=temp->type;
+	if(t->Ptr1==NULL)
+		return temp->type;
+	return findFinalType(temp->type,t->Ptr1);
 }
 
 int toBool(int x){

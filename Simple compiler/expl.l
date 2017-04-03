@@ -7,6 +7,7 @@
 	#include "y.tab.h"
 	#include "exptree.h"
 	#include "sym_table.h"
+	#include "lsym_table.h"
 	#include "typetable.h"
 
 	struct Gsymbol *GST = NULL;
@@ -55,7 +56,7 @@
 [);({}] 	{return *yytext;}
 [ \t\n] {}
 ","	{return *yytext;}
-("["|"]")	{return *yytext;}
+("["|"]"|".")	{return *yytext;}
 "<" 	{return LT;}
 "<=" 	{return LE;}
 ">=" 	{return GE;}
@@ -64,7 +65,16 @@
 "!=" 	{return NEQ;}
 [a-zA-Z_][a-zA-Z_0-9]*   { char *temp=malloc(sizeof(char)*(strlen(yytext)+1));
 	strcpy(temp, yytext);
-	yylval = TreeCreate(VAR_TYPE_VOID, ID, -1, temp, NULL, NULL, NULL, NULL);
+	struct Typetable *t;
+	struct Lsymbol *l;
+	struct Gsymbol * g;
+	if ((l = LLookup(temp)) != NULL)
+		t = l->type;
+	else if ((g = Glookup(temp)) != NULL)
+		t = g->type;
+	else
+		t = VAR_TYPE_VOID;
+	yylval = TreeCreate(t, ID, -1, temp, NULL, NULL, NULL, NULL);
 	return ID;
 	}
 [0-9]+  { yylval = TreeCreate(VAR_TYPE_INT, INT, atoi(yytext), yytext, NULL, NULL, NULL, NULL); return INT;
