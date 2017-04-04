@@ -19,7 +19,6 @@ int main()
 
   begin
     Initialize();
-
     head=null;
     read(length);
     q=head;
@@ -30,25 +29,23 @@ int main()
       p.next=null;
 
      if (head==null) then
-      breakpoint;
-      write(444);
       head=p;
       q=p;
-      else
+     else
       q.next=p;
       q=q.next;
-      endif;
-
+     endif;
       length=length-1;
     endwhile;
 
     p=head;
-    write(3333);
+
+
     while(p!=null)  do
-      write(4444);
       write(p.data);
       p=p.next;
     endwhile;
+    breakpoint;
 
     return 1;
   end

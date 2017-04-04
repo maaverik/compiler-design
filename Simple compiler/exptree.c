@@ -34,11 +34,13 @@ struct Typetable* findFinalType(struct Typetable* type, struct tnode *t){
 		temp=temp->next;
 	}
 	if(temp==NULL){
-		printf("%s Field not found %s\n",t->NAME,type->name );
+		printf("%s field not found %s\n",t->NAME,type->name );
 		exit(-1);
 	}
 	t->VALUE=temp->fieldIndex-1;
 	t->TYPE=temp->type;
+
+	printf("%s %d", t->NAME, t->VALUE);
 	if(t->Ptr1==NULL)
 		return temp->type;
 	return findFinalType(temp->type,t->Ptr1);

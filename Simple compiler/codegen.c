@@ -231,10 +231,12 @@ int codeGen(struct tnode* t){
 					freeReg();
 				}
 				else{
+					r2 = getReg();
 					fprintf(fp, "MOV R%d, %d\n", r2, Glookup(t->Ptr1->NAME)->binding);
 					fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
 					getFieldAddr(r2, t->Ptr1->Ptr1);
 					fprintf(fp, "MOV [R%d], R%d\n", r2, r1);
+					freeReg();
 				}
 				freeReg();
 			}
@@ -357,10 +359,10 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "L%d:\n",l1);
 			r1 = codeGen(t->Ptr1);
 			fprintf(fp, "JZ R%d, L%d\n", r1, l2);
+			freeReg();
 			codeGen(t->Ptr2);
 			fprintf(fp, "JMP L%d\n",l1);
 			fprintf(fp, "L%d:\n", l2);
-			freeReg();
 			return 0;
 			break;
 		case ARRVAL:
@@ -447,9 +449,9 @@ int codeGen(struct tnode* t){
 				fprintf(fp, "MOV R%d, %d\n", r2, Glookup(t->Ptr1->NAME)->binding);
 				fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
 			}
-			getFieldAddr(r1, t->Ptr1->Ptr1);
-			fprintf(fp, "MOV R%d, [R%d]\n", r1, r1);
-			return r1;
+			getFieldAddr(r2, t->Ptr1->Ptr1);
+			fprintf(fp, "MOV R%d, [R%d]\n", r2, r2);
+			return r2;
 			break;
 		case INIT:
 			treg=0;
@@ -466,6 +468,7 @@ int codeGen(struct tnode* t){
 			break;
 		case ALLOC:
 			treg=0;
+			r2 = getReg();
 			for(treg=0;treg<nextFreeReg;treg++)
 				fprintf(fp, "PUSH R%d\n",treg);
 			r1 = getReg();
@@ -475,11 +478,12 @@ int codeGen(struct tnode* t){
 			fprintf(fp, "PUSH R%d\n",r1);
 			fprintf(fp, "ADD SP,3\n");
 			fprintf(fp, "CALL 0\n" );
-			fprintf(fp, "POP R%d\n",r1 );
+			fprintf(fp, "POP R%d\n",r2 );
 			fprintf(fp, "SUB SP,4\n" );
+			freeReg();
 			for(treg=nextFreeReg-2;treg>=0;treg--)
 				fprintf(fp, "POP R%d\n",treg);
-			return r1;
+			return r2;
 			break;
 		case FREE:
 			treg=0;

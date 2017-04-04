@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 extern struct Gsymbol *GST;
-int nextFreeLocation = 4096;
+int nextFreeLocation = 4098;	//main stores return value in BP - 2 (i.e maybe in 4096)
 
 struct Gsymbol *Glookup(char *name){ // Look up for a global identifier
 	struct Gsymbol *tmp = GST;
