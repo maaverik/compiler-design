@@ -198,18 +198,23 @@ arglist : arg ',' arglist {
 	| %empty {$$ = NULL;}
 	;
 
-arg : type ID {
-		if (var_type == NULL){
+arg : Type ID {
+		if ($1 == NULL){
 			printf("Type is not defined\n");
 			exit(-1);
 		}
 		struct Paramstruct *p = malloc(sizeof(struct Paramstruct));
 		p->name = $2->NAME;
-		p->type = var_type;
+		p->type = (struct Typetable*)$1;
 		p->next = NULL;
 		$$ = (struct tnode*)p;
 	}
 	;
+
+Type :  INT { $$ = (struct tnode *)TLookup(strdup("INT"));}
+	 | BOOL { $$ = (struct tnode *)TLookup(strdup("BOOL"));}
+	 | ID { $$ = (struct tnode *)TLookup($1->NAME);}
+	 ;
 
 LDefBlock : DECL LDefList ENDDECL 	{}
 	| %empty				{}
@@ -437,10 +442,15 @@ stmt: 	ID ASGN expr ';' {
 			TreeCreate(VAR_TYPE_VOID, READ, -1, NULL, NULL, $3, NULL, NULL);
 		}
 		| ID ASGN TNULL ';' {
-			if (Glookup($1->NAME)->type == VAR_TYPE_INT || Glookup($1->NAME)->type == VAR_TYPE_BOOL || Glookup($1->NAME)->type == VAR_TYPE_VOID || Glookup($1->NAME)->type == VAR_TYPE_BOOLARR || Glookup($1->NAME)->type == VAR_TYPE_INTARR){
+			if (LLookup($1->NAME) != NULL && ((LLookup($1->NAME)->type == VAR_TYPE_INT || LLookup($1->NAME)->type == VAR_TYPE_BOOL || LLookup($1->NAME)->type == VAR_TYPE_VOID || LLookup($1->NAME)->type == VAR_TYPE_BOOLARR || LLookup($1->NAME)->type == VAR_TYPE_INTARR))){
 				printf("Type error: null\n");
 				exit(-1);
 			}
+			else if (Glookup($1->NAME) != NULL && (Glookup($1->NAME)->type == VAR_TYPE_INT || Glookup($1->NAME)->type == VAR_TYPE_BOOL || Glookup($1->NAME)->type == VAR_TYPE_VOID || Glookup($1->NAME)->type == VAR_TYPE_BOOLARR || Glookup($1->NAME)->type == VAR_TYPE_INTARR)){
+				printf("Type error: null\n");
+				exit(-1);
+			}
+
 			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}

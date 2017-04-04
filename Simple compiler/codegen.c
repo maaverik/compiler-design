@@ -469,7 +469,7 @@ int codeGen(struct tnode* t){
 		case ALLOC:
 			treg=0;
 			r2 = getReg();
-			for(treg=0;treg<nextFreeReg;treg++)
+			for(treg=0;treg<nextFreeReg - 1;treg++)
 				fprintf(fp, "PUSH R%d\n",treg);
 			r1 = getReg();
 			fprintf(fp, "MOV R%d,-2\n",r1);
