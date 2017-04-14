@@ -1,0 +1,81 @@
+type
+  List
+  {
+    int data;
+    List next;
+  }
+endtype
+
+decl
+    List head;
+    List reverse(List x);
+enddecl
+
+List reverse(List x){
+  decl
+    List first, rest, ret;
+  enddecl
+
+  begin
+    if (x.next == null) then
+      ret = x;
+    else
+
+      first = x;
+      rest = first.next;
+
+      rest = reverse(rest);
+      ret = rest;
+      while (ret.next != null) do
+        ret = ret.next;
+      endwhile;
+      ret.next = first;
+      first.next = null;
+
+      ret = rest;
+    endif;
+    return ret;
+
+  end
+}
+
+int main()
+{
+  decl
+    int length, x;
+    List p, q;
+  enddecl
+
+  begin
+    Initialize();
+    head=null;
+    read(length);
+    q=head;
+    while (length!=0)  do
+      read(x);
+      p=alloc();
+      p.data=x;
+      p.next=null;
+
+     if (head==null) then
+      head=p;
+      q=p;
+     else
+      q.next=p;
+      q=q.next;
+     endif;
+      length=length-1;
+    endwhile;
+
+    p=reverse(head);
+
+
+    while(p!=null)  do
+      write(p.data);
+      p=p.next;
+    endwhile;
+
+    return 1;
+  end
+}
+

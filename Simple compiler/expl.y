@@ -118,7 +118,6 @@ var : ID '[' INT ']' {
 		}
 		Ginstall($1->NAME, var_type, -1, (struct Paramstruct*)$3);
 		$1->TYPE = var_type;
-		printf("Func %s : %s\n", $1->NAME, $1->TYPE->name);
 	}
 	;
 
@@ -293,7 +292,6 @@ stmt: 	ID ASGN expr ';' {
 				exit(0);
 			}
 			if($1->TYPE != $3->TYPE){
-				printf("%s %s\n", Glookup($1->NAME)->type->name, $3->TYPE->name);
 				printf("type error: =\n");
 				exit(0);
 			}
@@ -418,6 +416,10 @@ stmt: 	ID ASGN expr ';' {
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
 		| field ASGN ALLOC '(' ')' ';' {
+			if ($1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type\n");
+				exit(-1);
+			}
 			$1->TYPE = findFinalType($1->TYPE, $1->Ptr1);
 			$3 = TreeCreate(VAR_TYPE_VOID, ALLOC, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
@@ -434,6 +436,10 @@ stmt: 	ID ASGN expr ';' {
 			$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);
 		}
 		| FREE '(' field ')' ';' {
+			if ($3->TYPE == VAR_TYPE_BOOL || $3->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type\n");
+				exit(-1);
+			}
 			$3->TYPE = findFinalType($1->TYPE, $1->Ptr1);
 			$$ = TreeCreate(VAR_TYPE_VOID, FREE, -1, NULL, NULL, $3, NULL, NULL);
 		}
@@ -442,20 +448,20 @@ stmt: 	ID ASGN expr ';' {
 			TreeCreate(VAR_TYPE_VOID, READ, -1, NULL, NULL, $3, NULL, NULL);
 		}
 		| ID ASGN TNULL ';' {
-			if (LLookup($1->NAME) != NULL && ((LLookup($1->NAME)->type == VAR_TYPE_INT || LLookup($1->NAME)->type == VAR_TYPE_BOOL || LLookup($1->NAME)->type == VAR_TYPE_VOID || LLookup($1->NAME)->type == VAR_TYPE_BOOLARR || LLookup($1->NAME)->type == VAR_TYPE_INTARR))){
-				printf("Type error: null\n");
+			if ($3->TYPE == VAR_TYPE_BOOL || $3->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type\n");
 				exit(-1);
 			}
-			else if (Glookup($1->NAME) != NULL && (Glookup($1->NAME)->type == VAR_TYPE_INT || Glookup($1->NAME)->type == VAR_TYPE_BOOL || Glookup($1->NAME)->type == VAR_TYPE_VOID || Glookup($1->NAME)->type == VAR_TYPE_BOOLARR || Glookup($1->NAME)->type == VAR_TYPE_INTARR)){
-				printf("Type error: null\n");
-				exit(-1);
-			}
-
 			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  $1->NAME, NULL, $1, $3, NULL);
 		}
 		| field ASGN TNULL ';' {
 			$1->TYPE = findFinalType($1->TYPE, $1->Ptr1);
+			if ($1->TYPE == VAR_TYPE_BOOL || $1->TYPE == VAR_TYPE_INT){
+				printf("Not a user defined type\n");
+				exit(-1);
+			}
+
 			$3 = TreeCreate(VAR_TYPE_VOID, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
 			$$ = TreeCreate(VAR_TYPE_VOID, ASGN, -1,  NULL, NULL, $1, $3, NULL);
 		}
@@ -600,8 +606,6 @@ expr: expr PLUS expr {
  			struct Paramstruct *p = Glookup($1->NAME)->paramlist;
 			struct tnode *t = $3;
 			while (t != NULL && p != NULL){
-				printf("%s, %s\n", p->type->name, t->TYPE->name);
-				printf("%s, %s\n", p->name, t->NAME);
 				if (t->TYPE != p->type){
 					printf("Argument types don't match 3\n");
 					exit(0);
@@ -620,7 +624,8 @@ expr: expr PLUS expr {
  			$$ = TreeCreate(Glookup($1->NAME)->type, FUNCCALL, -1, $1->NAME, $3, NULL, NULL, NULL);
  		}
  		| field {
- 			$$ = TreeCreate(findFinalType($1->TYPE, $1->Ptr1), FIELD, 1, NULL, NULL, $1, NULL, NULL);
+ 			$1->TYPE = findFinalType($1->TYPE, $1->Ptr1);
+ 			$$ = TreeCreate($1->TYPE, FIELD, 1, NULL, NULL, $1, NULL, NULL);
  		}
  		| expr EQ TNULL {
  			$3 = TreeCreate(NULL, TNULL, -1, NULL, NULL, NULL, NULL, NULL);
@@ -636,6 +641,10 @@ field : ID '.' ID {
 		$1->VALUE = 1;
 		$$ = $1;
 		$1->Ptr1 = $3;
+		if ($1->TYPE == NULL){
+			printf("%s null\n", $1->NAME);
+			exit(-1);
+		}
 		struct Fieldlist *f = $1->TYPE->fields;
 		while(f != NULL){
 			if (strcmp($3->NAME, f->name) == 0){
@@ -650,6 +659,10 @@ field : ID '.' ID {
 	  	$$ = $1;
 	  	$1->Ptr1 = $3;
 		struct Fieldlist *f = $1->TYPE->fields;
+		if ($1->TYPE == NULL){
+			printf("%s null\n", $1->NAME);
+			exit(-1);
+		}
 	  	while(f != NULL){
 			if (strcmp($3->NAME, f->name) == 0){
 				$3->TYPE = f->type;
